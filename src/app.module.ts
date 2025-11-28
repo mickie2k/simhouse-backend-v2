@@ -6,7 +6,6 @@ import { UserModule } from './user/user.module';
 import { ConfigModule } from '@nestjs/config';
 import { BookingModule } from './booking/booking.module';
 import { HostModule } from './host/host.module';
-import { ProductModule } from './product/product.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SimulatorModule } from './simulator/simulator.module';
 
@@ -18,7 +17,6 @@ import { SimulatorModule } from './simulator/simulator.module';
     AuthModule,
     BookingModule,
     HostModule,
-    ProductModule,
     SimulatorModule,
   ],
   controllers: [AppController],
