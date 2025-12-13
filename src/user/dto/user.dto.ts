@@ -6,7 +6,6 @@ export class CreateUserDto{
     password: string;
     firstName: string;
     lastName: string;
-    roleid: number;
 }
 
 export class FindUserDto{

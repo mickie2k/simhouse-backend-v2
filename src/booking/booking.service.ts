@@ -21,14 +21,17 @@ export class BookingService {
     const schedules = await this.prisma.booking.findMany({
       where: { id: bookingId, customerId },
       include: {
-        bookingList: {
-          include: {
-            schedule: true,
-          },
-          orderBy: { schedule: { startTime: 'asc' } },
+      bookingList: {
+        include: {
+        schedule: true,
         },
-        simulator: true,
+        orderBy: { schedule: { startTime: 'asc' } },
+      },
+      simulator: {
+        include: {
         host: true,
+        },
+      },
       },
     });
     return schedules;
@@ -71,7 +74,7 @@ export class BookingService {
   }
 
   private async bookingSimDB(bookingData: BookingRequestDto, customerId: number): Promise<[number, boolean]>{
-    const result = await this.prisma.$transaction(async (tx) => {
+    return await this.prisma.$transaction(async (tx) => {
       // 1) Attempt to claim schedules atomically by updating those available=true
       const claim = await tx.simulatorSchedule.updateMany({
         where: { simId: bookingData.simId, id: { in: bookingData.scheduleId }, available: true },
@@ -104,7 +107,6 @@ export class BookingService {
       return [booking.id, true] as const;
     });
 
-    return result;
   }
 
   private async cancelBookByCustomer(bookingId: number, customerID: number) {

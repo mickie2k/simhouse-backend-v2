@@ -1,19 +1,18 @@
-import { Inject, Injectable } from '@nestjs/common';
-
-import * as schema from 'src/drizzle/schema';
-import { CreateUserDto, FindUserDto  } from './dto/user.dto';
-import { DRIZZLE } from 'src/drizzle/drizzle.module';
-import { DrizzleDB } from 'src/drizzle/types/drizzletype';
-import { eq, and, isNotNull } from 'drizzle-orm';
+import { Injectable } from '@nestjs/common';
+import { FindUserDto  } from './dto/user.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { RegisterUserDto } from 'src/auth/dto/auth.dto';
 
 @Injectable()
 export class UserService {
-    constructor(@Inject(DRIZZLE) private readonly db: DrizzleDB) { }
+    constructor(private readonly prisma: PrismaService) { }
 
 
-    async createUser(data: CreateUserDto) {
+    async createUser(data: RegisterUserDto) {
         try{
-            const user = await this.db.insert(schema.users).values(data);
+            const user = await this.prisma.user.create({
+                data: data
+            });
             return user;
         }catch (error) {
             console.log(error)
@@ -22,68 +21,101 @@ export class UserService {
     }
 
     async findUser(data: FindUserDto) {
+        const user = await this.prisma.user.findFirst({
+            where: {
+                email: data.email,
+            },
+            select: {
+                id: true,
+                username: true,
+                firstName: true,
+                lastName: true,
+                password: true,
+                email: true,
+                googleId: true,
+            }
+        });
 
-        // const user = await this.db.query.users.findFirst({
-        //     where: eq(schema.users.email, data.email),
-            
-        // })
-        const user = await this.db.select({
-            id: schema.users.id,
-            username: schema.users.username,
-            firstName: schema.users.firstName,
-            lastName: schema.users.lastName,
-            password: schema.users.password,
-            email: schema.users.email,
-            googleId: schema.users.googleId,
-            role: schema.roles.name, 
-        }).from(schema.users).where(
-        and(
-            eq(schema.users.email, data.email),
-        )).innerJoin(schema.roles, eq(schema.users.roleid, schema.roles.roleid)).limit(1);
-        return user[0];
+        if (!user) return null;
+
+        return {
+            id: user.id,
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            password: user.password,
+            email: user.email,
+            googleId: user.googleId,
+        };
     }
 
     async findUserWithoutSSO(data: FindUserDto) {
-        const user = await this.db.select({
-            id: schema.users.id,
-            username: schema.users.username,
-            firstName: schema.users.firstName,
-            lastName: schema.users.lastName,
-            password: schema.users.password,
-            email: schema.users.email,
-            googleId: schema.users.googleId,
-            role: schema.roles.name, 
-        }).from(schema.users).where(
-        and(
-            eq(schema.users.email, data.email),
-            isNotNull(schema.users.password)
-        )).innerJoin(schema.roles, eq(schema.users.roleid, schema.roles.roleid)).limit(1);
+        const user = await this.prisma.user.findFirst({
+            where: {
+                email: data.email,
+                password: {
+                    not: null
+                }
+            },
+            select: {
+                id: true,
+                username: true,
+                firstName: true,
+                lastName: true,
+                password: true,
+                email: true,
+                googleId: true,
+            }
+        });
 
-        return user[0];
+        if (!user) return null;
+
+        return {
+            id: user.id,
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            password: user.password,
+            email: user.email,
+            googleId: user.googleId,
+        };
     }
 
 
     async getProfile(user : any) {
-        const userRes = await this.db.select({
-            username: schema.users.username,
-            firstName: schema.users.firstName,
-            lastName: schema.users.lastName,
-            email: schema.users.email,
-            role: schema.roles.name, 
-        }).from(schema.users).where(
-        and(
-            eq(schema.users.id, user.id),
-        )).innerJoin(schema.roles, eq(schema.users.roleid, schema.roles.roleid)).limit(1);
-        return userRes[0];
+        const userRes = await this.prisma.user.findFirst({
+            where: {
+                id: user.id,
+            },
+            select: {
+                username: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+            }
+        });
+
+        if (!userRes) return null;
+
+        return {
+            username: userRes.username,
+            firstName: userRes.firstName,
+            lastName: userRes.lastName,
+            email: userRes.email,
+        };
     }
 
     async getUsername(user: any) {
-        const res = await this.db.query.users.findFirst({
-            where: eq(schema.users.id, user.id)
+        const res = await this.prisma.user.findFirst({
+            where: {
+                id: user.id
+            },
+            select: {
+                username: true
+            }
         });
         return {
             username: res?.username,
         };
     }
 }
-

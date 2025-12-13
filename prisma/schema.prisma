@@ -1,31 +1,167 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output          = "../src/generated/prisma"
+  moduleFormat    = "cjs"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
+
+// Users and Authentication (matches SQL 'customer' table)
 model User {
-  id    Int     @default(autoincrement()) @id
-  email String  @unique
-  name  String?
-  posts Post[]
+  id        Int       @id @default(autoincrement()) @map("CustomerID")
+  firstName String    @map("FName") @db.VarChar(100)
+  lastName  String    @map("LName") @db.VarChar(100)
+  username  String    @unique @map("Username") @db.VarChar(100)
+  password  String?    @map("Password") @db.VarChar(255)
+  phone     String?   @map("CTel") @db.VarChar(10)
+  email     String    @unique @map("CEmail") @db.VarChar(255)
+  googleId  String?   @unique @map("GoogleID") @db.VarChar(255)
+  
+  bookings  Booking[] @relation("CustomerBookings")
+
+  @@map("customer")
 }
 
-model Post {
-  id        Int      @default(autoincrement()) @id
-  title     String
-  content   String?
-  published Boolean? @default(false)
-  author    User?    @relation(fields: [authorId], references: [id])
-  authorId  Int?
+// Host Management (matches SQL 'host' table)
+model Host {
+  id              Int         @id @default(autoincrement()) @map("HostID")
+  firstName       String      @map("FName") @db.VarChar(100)
+  lastName        String      @map("LName") @db.VarChar(100)
+  username        String      @unique @map("Username") @db.VarChar(100)
+  password        String      @map("Password") @db.VarChar(255)
+  phone           String      @map("Htel") @db.VarChar(10)
+  email           String      @unique @map("HEmail") @db.VarChar(255)
+  googleId       String?     @unique @map("GoogleID") @db.VarChar(255)
+  
+  simulators      Simulator[]
+
+  @@map("host")
+}
+
+// Simulator Types and Mods
+model SimulatorType {
+  id          Int                   @id @default(autoincrement()) @map("SimTypeID")
+  typeName    String                @map("SimTypeName") @db.VarChar(32)
+  
+  typeList    SimulatorTypeList[]
+
+  @@map("simulatortype")
+}
+
+model SimulatorTypeList {
+  simTypeId   Int         @map("SimTypeID")
+  simId       Int         @map("SimID")
+  
+  simulator   Simulator   @relation(fields: [simId], references: [id])
+  simType     SimulatorType @relation(fields: [simTypeId], references: [id])
+
+  @@id([simTypeId, simId])
+  @@map("simulatortypelist")
+
+}
+
+model SimulatorBrand {
+  id          Int              @id @default(autoincrement()) @map("BrandID")
+  brandName   String           @map("BrandName") @db.VarChar(32)
+  
+  models      SimulatorMod[]
+
+  @@map("simulatorbrand")
+}
+
+model SimulatorMod {
+  id          Int              @id @default(autoincrement()) @map("ModID")
+  modelName   String           @map("ModelName") @db.VarChar(100)
+  description String?          @map("Description") @db.Text
+  brandId     Int              @map("BrandID")
+  
+  brand       SimulatorBrand   @relation(fields: [brandId], references: [id])
+  simulators  Simulator[]
+
+  @@map("simulatormodel")
+}
+
+// Simulators (matches SQL 'simulatorlist' table)
+model Simulator {
+  id              Int                  @id @default(autoincrement()) @map("SimID")
+  simListName     String               @map("SimListName") @db.VarChar(255)
+  pricePerHour    Decimal              @map("PricePerHour") @db.Decimal(10, 2)
+  listDescription String?              @map("ListDescription") @db.Text
+  addressDetail   String      @map("AddressDetail") @db.Text
+  latitude        Decimal     @map("Lat") @db.Decimal(10, 8)
+  longitude       Decimal     @map("Long") @db.Decimal(11, 8)
+  firstImage      String               @default("noimage.jpg") @map("firstimage") @db.VarChar(255)
+  secondImage     String               @default("noimage.jpg") @map("secondimage") @db.VarChar(255)
+  thirdImage      String               @default("noimage.jpg") @map("thirdimage") @db.VarChar(255)
+  hostId          Int                  @map("HostID")
+  modId           Int                  @map("ModID")
+  
+  mod             SimulatorMod          @relation(fields: [modId], references: [id])
+  host            Host                  @relation(fields: [hostId], references: [id])
+  schedules       SimulatorSchedule[]
+  bookings        Booking[]
+  typeList        SimulatorTypeList[]
+
+  @@map("simulatorlist")
+}
+
+// Simulator Schedules (matches SQL 'simulatorschedule' table)
+model SimulatorSchedule {
+  id          Int       @id @default(autoincrement()) @map("ScheduleID")
+  price       Decimal   @map("Price") @db.Decimal(10, 2)
+  date        DateTime  @map("Date") @db.Date
+  startTime   DateTime  @map("StartTime") @db.Time(0)
+  endTime     DateTime  @map("EndTime") @db.Time(0)
+  available   Boolean   @default(true) @map("Available")
+  simId       Int       @map("SimID")
+  
+  simulator   Simulator     @relation(fields: [simId], references: [id])
+  bookingList BookingList[]
+
+  @@map("simulatorschedule")
+}
+
+// Booking Status (matches SQL 'bookingstatus' table)
+model BookingStatus {
+  id          Int       @id @default(autoincrement()) @map("StatusID")
+  statusName  String    @map("Statusname") @db.VarChar(16)
+  
+  bookings    Booking[]
+
+  @@map("bookingstatus")
+}
+
+// Bookings (matches SQL 'booking' table)
+model Booking {
+  id            Int            @id @default(autoincrement()) @map("BookingID")
+  bookingDate   DateTime       @default(now()) @map("BookingDate") @db.Timestamptz(6)
+  totalPrice    Decimal        @map("TotalPrice") @db.Decimal(10, 2)
+  statusId      Int            @map("StatusID") @default(1)
+  customerId    Int            @map("CustomerID")
+  simId         Int            @map("SimID")
+  
+  customer      User           @relation("CustomerBookings", fields: [customerId], references: [id])
+  simulator     Simulator      @relation(fields: [simId], references: [id])
+  bookingStatus BookingStatus  @relation(fields: [statusId], references: [id])
+  bookingList   BookingList[]
+
+  @@map("booking")
+}
+
+// Booking List (junction table - matches SQL 'bookinglist' table)
+model BookingList {
+  bookingId   Int               @map("BookingID")
+  scheduleId  Int               @map("ScheduleID")
+  
+  booking     Booking           @relation(fields: [bookingId], references: [id])
+  schedule    SimulatorSchedule @relation(fields: [scheduleId], references: [id])
+
+  @@id([bookingId, scheduleId])
+  @@map("bookinglist")
 }
