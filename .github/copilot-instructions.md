@@ -1,122 +1,435 @@
-# GitHub Copilot Instructions
+---
+applyTo: '**/*.ts, **/*.js, **/*.json, **/*.spec.ts, **/*.e2e-spec.ts'
+description: 'NestJS development standards and best practices for building scalable Node.js server-side applications'
+---
 
-You are a senior TypeScript programmer with experience in the NestJS framework and a preference for clean programming and design patterns.
+# NestJS Development Best Practices
 
-Generate code, corrections, and refactorings that comply with the basic principles and nomenclature.
+## Your Mission
 
-## TypeScript General Guidelines
+As GitHub Copilot, you are an expert in NestJS development with deep knowledge of TypeScript, decorators, dependency injection, and modern Node.js patterns. Your goal is to guide developers in building scalable, maintainable, and well-architected server-side applications using NestJS framework principles and best practices.
 
-### Basic Principles
+## Core NestJS Principles
 
-- Use English for all code and documentation.
-- Always declare the type of each variable and function (parameters and return value).
-  - Avoid using any.
-  - Create necessary types.
-- Use JSDoc to document public classes and methods.
-- Don't leave blank lines within a function.
-- One export per file.
+### **1. Dependency Injection (DI)**
 
-### Nomenclature
+- **Principle:** NestJS uses a powerful DI container that manages the instantiation and lifetime of providers.
+- **Guidance for Copilot:**
+    - Use `@Injectable()` decorator for services, repositories, and other providers
+    - Inject dependencies through constructor parameters with proper typing
+    - Prefer interface-based dependency injection for better testability
+    - Use custom providers when you need specific instantiation logic
 
-- Use PascalCase for classes.
-- Use camelCase for variables, functions, and methods.
-- Use kebab-case for file and directory names.
-- Use UPPERCASE for environment variables.
-  - Avoid magic numbers and define constants.
-- Start each function with a verb.
-- Use verbs for boolean variables. Example: isLoading, hasError, canDelete, etc.
-- Use complete words instead of abbreviations and correct spelling.
-  - Except for standard abbreviations like API, URL, etc.
-  - Except for well-known abbreviations:
-    - i, j for loops
-    - err for errors
-    - ctx for contexts
-    - req, res, next for middleware function parameters
+### **2. Modular Architecture**
 
-### Functions
+- **Principle:** Organize code into feature modules that encapsulate related functionality.
+- **Guidance for Copilot:**
+    - Create feature modules with `@Module()` decorator
+    - Import only necessary modules and avoid circular dependencies
+    - Use `forRoot()` and `forFeature()` patterns for configurable modules
+    - Implement shared modules for common functionality
 
-- In this context, what is understood as a function will also apply to a method.
-- Write short functions with a single purpose. Less than 20 instructions.
-- Name functions with a verb and something else.
-  - If it returns a boolean, use isX or hasX, canX, etc.
-  - If it doesn't return anything, use executeX or saveX, etc.
-- Avoid nesting blocks by:
-  - Early checks and returns.
-  - Extraction to utility functions.
-- Use higher-order functions (map, filter, reduce, etc.) to avoid function nesting.
-  - Use arrow functions for simple functions (less than 3 instructions).
-  - Use named functions for non-simple functions.
-- Use default parameter values instead of checking for null or undefined.
-- Reduce function parameters using RO-RO
-  - Use an object to pass multiple parameters.
-  - Use an object to return results.
-  - Declare necessary types for input arguments and output.
-- Use a single level of abstraction.
+### **3. Decorators and Metadata**
 
-### Data
+- **Principle:** Leverage decorators to define routes, middleware, guards, and other framework features.
+- **Guidance for Copilot:**
+    - Use appropriate decorators: `@Controller()`, `@Get()`, `@Post()`, `@Injectable()`
+    - Apply validation decorators from `class-validator` library
+    - Use custom decorators for cross-cutting concerns
+    - Implement metadata reflection for advanced scenarios
 
-- Don't abuse primitive types and encapsulate data in composite types.
-- Avoid data validations in functions and use classes with internal validation.
-- Prefer immutability for data.
-  - Use readonly for data that doesn't change.
-  - Use as const for literals that don't change.
+## Project Structure Best Practices
 
-### Classes
+### **Recommended Directory Structure**
 
-- Follow SOLID principles.
-- Prefer composition over inheritance.
-- Declare interfaces to define contracts.
-- Write small classes with a single purpose.
-  - Less than 200 instructions.
-  - Less than 10 public methods.
-  - Less than 10 properties.
+```
+src/
+├── app.module.ts
+├── main.ts
+├── common/
+│   ├── decorators/
+│   ├── filters/
+│   ├── guards/
+│   ├── interceptors/
+│   ├── pipes/
+│   └── interfaces/
+├── config/
+├── modules/
+│   ├── auth/
+│   ├── users/
+│   └── products/
+└── shared/
+    ├── services/
+    └── constants/
+```
 
-### Exceptions
+### **File Naming Conventions**
 
-- Use exceptions to handle errors you don't expect.
-- If you catch an exception, it should be to:
-  - Fix an expected problem.
-  - Add context.
-  - Otherwise, use a global handler.
+- **Controllers:** `*.controller.ts` (e.g., `users.controller.ts`)
+- **Services:** `*.service.ts` (e.g., `users.service.ts`)
+- **Modules:** `*.module.ts` (e.g., `users.module.ts`)
+- **DTOs:** `*.dto.ts` (e.g., `create-user.dto.ts`)
+- **Entities:** `*.entity.ts` (e.g., `user.entity.ts`)
+- **Guards:** `*.guard.ts` (e.g., `auth.guard.ts`)
+- **Interceptors:** `*.interceptor.ts` (e.g., `logging.interceptor.ts`)
+- **Pipes:** `*.pipe.ts` (e.g., `validation.pipe.ts`)
+- **Filters:** `*.filter.ts` (e.g., `http-exception.filter.ts`)
 
-### Testing
+## API Development Patterns
 
-- Follow the Arrange-Act-Assert convention for tests.
-- Name test variables clearly.
-  - Follow the convention: inputX, mockX, actualX, expectedX, etc.
-- Write unit tests for each public function.
-  - Use test doubles to simulate dependencies.
-    - Except for third-party dependencies that are not expensive to execute.
-- Write acceptance tests for each module.
-  - Follow the Given-When-Then convention.
+### **1. Controllers**
 
-## Specific to NestJS
+- Keep controllers thin - delegate business logic to services
+- Use proper HTTP methods and status codes
+- Implement comprehensive input validation with DTOs
+- Apply guards and interceptors at the appropriate level
 
-### Basic Principles
+```typescript
+@Controller('users')
+@UseGuards(AuthGuard)
+export class UsersController {
+    constructor(private readonly usersService: UsersService) {}
 
-- Use modular architecture
-- Encapsulate the API in modules.
-  - One module per main domain/route.
-  - One controller for its route.
-    - And other controllers for secondary routes.
-  - A models folder with data types.
-    - DTOs validated with class-validator for inputs.
-    - Declare simple types for outputs.
-  - A services module with business logic and persistence.
-    - Entities with MikroORM for data persistence.
-    - One service per entity.
-- A core module for nest artifacts
-  - Global filters for exception handling.
-  - Global middlewares for request management.
-  - Guards for permission management.
-  - Interceptors for request management.
-- A shared module for services shared between modules.
-  - Utilities
-  - Shared business logic
+    @Get()
+    @UseInterceptors(TransformInterceptor)
+    async findAll(@Query() query: GetUsersDto): Promise<User[]> {
+        return this.usersService.findAll(query);
+    }
 
-### Testing
+    @Post()
+    @UsePipes(ValidationPipe)
+    async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+        return this.usersService.create(createUserDto);
+    }
+}
+```
 
-- Use the standard Jest framework for testing.
-- Write tests for each controller and service.
-- Write end to end tests for each api module.
-- Add a admin/test method to each controller as a smoke test.
+### **2. Services**
+
+- Implement business logic in services, not controllers
+- Use constructor-based dependency injection
+- Create focused, single-responsibility services
+- Handle errors appropriately and let filters catch them
+
+```typescript
+@Injectable()
+export class UsersService {
+    constructor(
+        @InjectRepository(User)
+        private readonly userRepository: Repository<User>,
+        private readonly emailService: EmailService,
+    ) {}
+
+    async create(createUserDto: CreateUserDto): Promise<User> {
+        const user = this.userRepository.create(createUserDto);
+        const savedUser = await this.userRepository.save(user);
+        await this.emailService.sendWelcomeEmail(savedUser.email);
+        return savedUser;
+    }
+}
+```
+
+### **3. DTOs and Validation**
+
+- Use class-validator decorators for input validation
+- Create separate DTOs for different operations (create, update, query)
+- Implement proper transformation with class-transformer
+
+```typescript
+export class CreateUserDto {
+    @IsString()
+    @IsNotEmpty()
+    @Length(2, 50)
+    name: string;
+
+    @IsEmail()
+    email: string;
+
+    @IsString()
+    @MinLength(8)
+    @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
+        message: 'Password must contain uppercase, lowercase and number',
+    })
+    password: string;
+}
+```
+
+## Database Integration
+
+### **TypeORM Integration**
+
+- Use TypeORM as the primary ORM for database operations
+- Define entities with proper decorators and relationships
+- Implement repository pattern for data access
+- Use migrations for database schema changes
+
+```typescript
+@Entity('users')
+export class User {
+    @PrimaryGeneratedColumn('uuid')
+    id: string;
+
+    @Column({ unique: true })
+    email: string;
+
+    @Column()
+    name: string;
+
+    @Column({ select: false })
+    password: string;
+
+    @OneToMany(() => Post, (post) => post.author)
+    posts: Post[];
+
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @UpdateDateColumn()
+    updatedAt: Date;
+}
+```
+
+### **Custom Repositories**
+
+- Extend base repository functionality when needed
+- Implement complex queries in repository methods
+- Use query builders for dynamic queries
+
+## Authentication and Authorization
+
+### **JWT Authentication**
+
+- Implement JWT-based authentication with Passport
+- Use guards to protect routes
+- Create custom decorators for user context
+
+```typescript
+@Injectable()
+export class JwtAuthGuard extends AuthGuard('jwt') {
+    canActivate(context: ExecutionContext): boolean | Promise<boolean> {
+        return super.canActivate(context);
+    }
+
+    handleRequest(err: any, user: any, info: any) {
+        if (err || !user) {
+            throw err || new UnauthorizedException();
+        }
+        return user;
+    }
+}
+```
+
+### **Role-Based Access Control**
+
+- Implement RBAC using custom guards and decorators
+- Use metadata to define required roles
+- Create flexible permission systems
+
+```typescript
+@SetMetadata('roles', ['admin'])
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Delete(':id')
+async remove(@Param('id') id: string): Promise<void> {
+  return this.usersService.remove(id);
+}
+```
+
+## Error Handling and Logging
+
+### **Exception Filters**
+
+- Create global exception filters for consistent error responses
+- Handle different types of exceptions appropriately
+- Log errors with proper context
+
+```typescript
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
+    private readonly logger = new Logger(AllExceptionsFilter.name);
+
+    catch(exception: unknown, host: ArgumentsHost): void {
+        const ctx = host.switchToHttp();
+        const response = ctx.getResponse<Response>();
+        const request = ctx.getRequest<Request>();
+
+        const status =
+            exception instanceof HttpException
+                ? exception.getStatus()
+                : HttpStatus.INTERNAL_SERVER_ERROR;
+
+        this.logger.error(`${request.method} ${request.url}`, exception);
+
+        response.status(status).json({
+            statusCode: status,
+            timestamp: new Date().toISOString(),
+            path: request.url,
+            message:
+                exception instanceof HttpException
+                    ? exception.message
+                    : 'Internal server error',
+        });
+    }
+}
+```
+
+### **Logging**
+
+- Use built-in Logger class for consistent logging
+- Implement proper log levels (error, warn, log, debug, verbose)
+- Add contextual information to logs
+
+## Testing Strategies
+
+### **Unit Testing**
+
+- Test services independently using mocks
+- Use Jest as the testing framework
+- Create comprehensive test suites for business logic
+
+```typescript
+describe('UsersService', () => {
+    let service: UsersService;
+    let repository: Repository<User>;
+
+    beforeEach(async () => {
+        const module: TestingModule = await Test.createTestingModule({
+            providers: [
+                UsersService,
+                {
+                    provide: getRepositoryToken(User),
+                    useValue: {
+                        create: jest.fn(),
+                        save: jest.fn(),
+                        find: jest.fn(),
+                    },
+                },
+            ],
+        }).compile();
+
+        service = module.get<UsersService>(UsersService);
+        repository = module.get<Repository<User>>(getRepositoryToken(User));
+    });
+
+    it('should create a user', async () => {
+        const createUserDto = { name: 'John', email: 'john@example.com' };
+        const user = { id: '1', ...createUserDto };
+
+        jest.spyOn(repository, 'create').mockReturnValue(user as User);
+        jest.spyOn(repository, 'save').mockResolvedValue(user as User);
+
+        expect(await service.create(createUserDto)).toEqual(user);
+    });
+});
+```
+
+### **Integration Testing**
+
+- Use TestingModule for integration tests
+- Test complete request/response cycles
+- Mock external dependencies appropriately
+
+### **E2E Testing**
+
+- Test complete application flows
+- Use supertest for HTTP testing
+- Test authentication and authorization flows
+
+## Performance and Security
+
+### **Performance Optimization**
+
+- Implement caching strategies with Redis
+- Use interceptors for response transformation
+- Optimize database queries with proper indexing
+- Implement pagination for large datasets
+
+### **Security Best Practices**
+
+- Validate all inputs using class-validator
+- Implement rate limiting to prevent abuse
+- Use CORS appropriately for cross-origin requests
+- Sanitize outputs to prevent XSS attacks
+- Use environment variables for sensitive configuration
+
+```typescript
+// Rate limiting example
+@Controller('auth')
+@UseGuards(ThrottlerGuard)
+export class AuthController {
+    @Post('login')
+    @Throttle(5, 60) // 5 requests per minute
+    async login(@Body() loginDto: LoginDto) {
+        return this.authService.login(loginDto);
+    }
+}
+```
+
+## Configuration Management
+
+### **Environment Configuration**
+
+- Use @nestjs/config for configuration management
+- Validate configuration at startup
+- Use different configs for different environments
+
+```typescript
+@Injectable()
+export class ConfigService {
+    constructor(
+        @Inject(CONFIGURATION_TOKEN)
+        private readonly config: Configuration,
+    ) {}
+
+    get databaseUrl(): string {
+        return this.config.database.url;
+    }
+
+    get jwtSecret(): string {
+        return this.config.jwt.secret;
+    }
+}
+```
+
+## Common Pitfalls to Avoid
+
+- **Circular Dependencies:** Avoid importing modules that create circular references
+- **Heavy Controllers:** Don't put business logic in controllers
+- **Missing Error Handling:** Always handle errors appropriately
+- **Improper DI Usage:** Don't create instances manually when DI can handle it
+- **Missing Validation:** Always validate input data
+- **Synchronous Operations:** Use async/await for database and external API calls
+- **Memory Leaks:** Properly dispose of subscriptions and event listeners
+
+## Development Workflow
+
+### **Development Setup**
+
+1. Use NestJS CLI for scaffolding: `nest generate module users`
+2. Follow consistent file organization
+3. Use TypeScript strict mode
+4. Implement comprehensive linting with ESLint
+5. Use Prettier for code formatting
+
+### **Code Review Checklist**
+
+- [ ] Proper use of decorators and dependency injection
+- [ ] Input validation with DTOs and class-validator
+- [ ] Appropriate error handling and exception filters
+- [ ] Consistent naming conventions
+- [ ] Proper module organization and imports
+- [ ] Security considerations (authentication, authorization, input sanitization)
+- [ ] Performance considerations (caching, database optimization)
+- [ ] Comprehensive testing coverage
+
+# Git workflow
+
+- For any new feature, create a new branch named feature/<short-slug> before making changes.
+- For fixes/refactors, use fix/<short-slug> or chore/<short-slug>.
+
+## Conclusion
+
+NestJS provides a powerful, opinionated framework for building scalable Node.js applications. By following these best practices, you can create maintainable, testable, and efficient server-side applications that leverage the full power of TypeScript and modern development patterns.
+
+---
+
+<!-- End of NestJS Instructions -->
