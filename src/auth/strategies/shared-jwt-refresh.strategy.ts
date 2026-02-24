@@ -15,12 +15,14 @@ interface JwtPayload {
     sub: number;
     email: string;
     role: string;
+    adminRole?: string;
 }
 
 interface AuthenticatedPayload {
     id: number;
     email: string;
     role: string;
+    adminRole?: string;
 }
 
 export function createJwtRefreshStrategy(
@@ -55,6 +57,7 @@ export function createJwtRefreshStrategy(
                 id: payload.sub,
                 email: payload.email,
                 role: payload.role,
+                adminRole: payload.adminRole,
             });
         }
     }

@@ -43,6 +43,7 @@ export type HostMinAggregateOutputType = {
   email: string | null
   googleId: string | null
   profileImageUrl: string | null
+  status: $Enums.UserStatus | null
 }
 
 export type HostMaxAggregateOutputType = {
@@ -55,6 +56,7 @@ export type HostMaxAggregateOutputType = {
   email: string | null
   googleId: string | null
   profileImageUrl: string | null
+  status: $Enums.UserStatus | null
 }
 
 export type HostCountAggregateOutputType = {
@@ -67,6 +69,7 @@ export type HostCountAggregateOutputType = {
   email: number
   googleId: number
   profileImageUrl: number
+  status: number
   _all: number
 }
 
@@ -89,6 +92,7 @@ export type HostMinAggregateInputType = {
   email?: true
   googleId?: true
   profileImageUrl?: true
+  status?: true
 }
 
 export type HostMaxAggregateInputType = {
@@ -101,6 +105,7 @@ export type HostMaxAggregateInputType = {
   email?: true
   googleId?: true
   profileImageUrl?: true
+  status?: true
 }
 
 export type HostCountAggregateInputType = {
@@ -113,6 +118,7 @@ export type HostCountAggregateInputType = {
   email?: true
   googleId?: true
   profileImageUrl?: true
+  status?: true
   _all?: true
 }
 
@@ -212,6 +218,7 @@ export type HostGroupByOutputType = {
   email: string
   googleId: string | null
   profileImageUrl: string | null
+  status: $Enums.UserStatus
   _count: HostCountAggregateOutputType | null
   _avg: HostAvgAggregateOutputType | null
   _sum: HostSumAggregateOutputType | null
@@ -247,6 +254,7 @@ export type HostWhereInput = {
   email?: Prisma.StringFilter<"Host"> | string
   googleId?: Prisma.StringNullableFilter<"Host"> | string | null
   profileImageUrl?: Prisma.StringNullableFilter<"Host"> | string | null
+  status?: Prisma.EnumUserStatusFilter<"Host"> | $Enums.UserStatus
   simulators?: Prisma.SimulatorListRelationFilter
 }
 
@@ -260,6 +268,7 @@ export type HostOrderByWithRelationInput = {
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrderInput | Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  status?: Prisma.SortOrder
   simulators?: Prisma.SimulatorOrderByRelationAggregateInput
 }
 
@@ -276,6 +285,7 @@ export type HostWhereUniqueInput = Prisma.AtLeast<{
   password?: Prisma.StringFilter<"Host"> | string
   phone?: Prisma.StringFilter<"Host"> | string
   profileImageUrl?: Prisma.StringNullableFilter<"Host"> | string | null
+  status?: Prisma.EnumUserStatusFilter<"Host"> | $Enums.UserStatus
   simulators?: Prisma.SimulatorListRelationFilter
 }, "id" | "username" | "email" | "googleId">
 
@@ -289,6 +299,7 @@ export type HostOrderByWithAggregationInput = {
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrderInput | Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  status?: Prisma.SortOrder
   _count?: Prisma.HostCountOrderByAggregateInput
   _avg?: Prisma.HostAvgOrderByAggregateInput
   _max?: Prisma.HostMaxOrderByAggregateInput
@@ -309,6 +320,7 @@ export type HostScalarWhereWithAggregatesInput = {
   email?: Prisma.StringWithAggregatesFilter<"Host"> | string
   googleId?: Prisma.StringNullableWithAggregatesFilter<"Host"> | string | null
   profileImageUrl?: Prisma.StringNullableWithAggregatesFilter<"Host"> | string | null
+  status?: Prisma.EnumUserStatusWithAggregatesFilter<"Host"> | $Enums.UserStatus
 }
 
 export type HostCreateInput = {
@@ -320,6 +332,7 @@ export type HostCreateInput = {
   email: string
   googleId?: string | null
   profileImageUrl?: string | null
+  status?: $Enums.UserStatus
   simulators?: Prisma.SimulatorCreateNestedManyWithoutHostInput
 }
 
@@ -333,6 +346,7 @@ export type HostUncheckedCreateInput = {
   email: string
   googleId?: string | null
   profileImageUrl?: string | null
+  status?: $Enums.UserStatus
   simulators?: Prisma.SimulatorUncheckedCreateNestedManyWithoutHostInput
 }
 
@@ -345,6 +359,7 @@ export type HostUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   simulators?: Prisma.SimulatorUpdateManyWithoutHostNestedInput
 }
 
@@ -358,6 +373,7 @@ export type HostUncheckedUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   simulators?: Prisma.SimulatorUncheckedUpdateManyWithoutHostNestedInput
 }
 
@@ -371,6 +387,7 @@ export type HostCreateManyInput = {
   email: string
   googleId?: string | null
   profileImageUrl?: string | null
+  status?: $Enums.UserStatus
 }
 
 export type HostUpdateManyMutationInput = {
@@ -382,6 +399,7 @@ export type HostUpdateManyMutationInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
 }
 
 export type HostUncheckedUpdateManyInput = {
@@ -394,6 +412,7 @@ export type HostUncheckedUpdateManyInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
 }
 
 export type HostCountOrderByAggregateInput = {
@@ -406,6 +425,7 @@ export type HostCountOrderByAggregateInput = {
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrder
+  status?: Prisma.SortOrder
 }
 
 export type HostAvgOrderByAggregateInput = {
@@ -422,6 +442,7 @@ export type HostMaxOrderByAggregateInput = {
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrder
+  status?: Prisma.SortOrder
 }
 
 export type HostMinOrderByAggregateInput = {
@@ -434,6 +455,7 @@ export type HostMinOrderByAggregateInput = {
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrder
+  status?: Prisma.SortOrder
 }
 
 export type HostSumOrderByAggregateInput = {
@@ -468,6 +490,7 @@ export type HostCreateWithoutSimulatorsInput = {
   email: string
   googleId?: string | null
   profileImageUrl?: string | null
+  status?: $Enums.UserStatus
 }
 
 export type HostUncheckedCreateWithoutSimulatorsInput = {
@@ -480,6 +503,7 @@ export type HostUncheckedCreateWithoutSimulatorsInput = {
   email: string
   googleId?: string | null
   profileImageUrl?: string | null
+  status?: $Enums.UserStatus
 }
 
 export type HostCreateOrConnectWithoutSimulatorsInput = {
@@ -507,6 +531,7 @@ export type HostUpdateWithoutSimulatorsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
 }
 
 export type HostUncheckedUpdateWithoutSimulatorsInput = {
@@ -519,6 +544,7 @@ export type HostUncheckedUpdateWithoutSimulatorsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
 }
 
 
@@ -562,6 +588,7 @@ export type HostSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   email?: boolean
   googleId?: boolean
   profileImageUrl?: boolean
+  status?: boolean
   simulators?: boolean | Prisma.Host$simulatorsArgs<ExtArgs>
   _count?: boolean | Prisma.HostCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["host"]>
@@ -576,6 +603,7 @@ export type HostSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   email?: boolean
   googleId?: boolean
   profileImageUrl?: boolean
+  status?: boolean
 }, ExtArgs["result"]["host"]>
 
 export type HostSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -588,6 +616,7 @@ export type HostSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   email?: boolean
   googleId?: boolean
   profileImageUrl?: boolean
+  status?: boolean
 }, ExtArgs["result"]["host"]>
 
 export type HostSelectScalar = {
@@ -600,9 +629,10 @@ export type HostSelectScalar = {
   email?: boolean
   googleId?: boolean
   profileImageUrl?: boolean
+  status?: boolean
 }
 
-export type HostOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firstName" | "lastName" | "username" | "password" | "phone" | "email" | "googleId" | "profileImageUrl", ExtArgs["result"]["host"]>
+export type HostOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firstName" | "lastName" | "username" | "password" | "phone" | "email" | "googleId" | "profileImageUrl" | "status", ExtArgs["result"]["host"]>
 export type HostInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   simulators?: boolean | Prisma.Host$simulatorsArgs<ExtArgs>
   _count?: boolean | Prisma.HostCountOutputTypeDefaultArgs<ExtArgs>
@@ -625,6 +655,7 @@ export type $HostPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     email: string
     googleId: string | null
     profileImageUrl: string | null
+    status: $Enums.UserStatus
   }, ExtArgs["result"]["host"]>
   composites: {}
 }
@@ -1058,6 +1089,7 @@ export interface HostFieldRefs {
   readonly email: Prisma.FieldRef<"Host", 'String'>
   readonly googleId: Prisma.FieldRef<"Host", 'String'>
   readonly profileImageUrl: Prisma.FieldRef<"Host", 'String'>
+  readonly status: Prisma.FieldRef<"Host", 'UserStatus'>
 }
     
 
