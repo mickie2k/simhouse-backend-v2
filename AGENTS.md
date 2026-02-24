@@ -9,7 +9,15 @@ This document provides essential information for AI agents working on the SimHou
 - **ORM:** Prisma (`prisma/schema.prisma`)
 - **Documentation:** Swagger/OpenAPI
 
-## 2. Build & Test Commands
+## 2. Git Workflow
+
+- Create feature branches: `feature/short-description`.
+- Fix branches: `fix/short-description`.
+- Auto-commit after each logical change with a clear, concise message.
+- Commit messages should be clear and concise.
+- **Pull Requests:** When a task is complete, verify all tests pass and then create a Pull Request (PR) to merge changes into the main branch. Use the `gh` tool if available.
+
+## 3. Build & Test Commands
 
 ### Core Commands
 
@@ -32,7 +40,7 @@ This document provides essential information for AI agents working on the SimHou
 - **Run E2E Tests:** `npm run test:e2e`
 - **Test Coverage:** `npm run test:cov`
 
-## 3. Code Style & Conventions
+## 4. Code Style & Conventions
 
 ### General
 
@@ -66,7 +74,7 @@ This document provides essential information for AI agents working on the SimHou
 - Use standard `HttpException` or subclasses (e.g., `NotFoundException`, `BadRequestException`).
 - A global `GenericExceptionFilter` is in place; ensure custom exceptions play nicely with it.
 
-## 4. Specific Rules (from Copilot Instructions)
+## 5. Specific Rules (from Copilot Instructions)
 
 ### Dependency Injection
 
@@ -89,14 +97,7 @@ This document provides essential information for AI agents working on the SimHou
 - **Unit Tests:** Co-locate `.spec.ts` files with source files. Mock dependencies using `jest.fn()` or Nest's testing utilities.
 - **E2E Tests:** Located in `test/` directory.
 
-## 5. External Libraries (Context7)
+## 6. External Libraries (Context7)
 
 - When implementing features requiring specific library knowledge (e.g., AWS SDK, Passport), verify the correct usage and version compatibility.
 - If unsure about a library's API, consult documentation or specific agent tools if available.
-
-## 6. Git Workflow
-
-- Create feature branches: `feature/short-description`.
-- Fix branches: `fix/short-description`.
-- Commit messages should be clear and concise.
-- **Pull Requests:** When a task is complete, verify all tests pass and then create a Pull Request (PR) to merge changes into the main branch. Use the `gh` tool if available.
