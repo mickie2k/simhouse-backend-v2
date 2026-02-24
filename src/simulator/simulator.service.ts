@@ -89,54 +89,9 @@ export class SimulatorService {
         return simulator;
     }
 
-    async findNearestLocation(query: FindNearestSimulatorsDto) {
-        const limit = query.limit ?? 20;
-        const radiusMeters = query.radiusKm * 1000;
-
-        const results = await this.prisma.$queryRaw<
-            Array<{
-                id: number;
-                simListName: string;
-                listDescription: string | null;
-                pricePerHour: number;
-                addressDetail: string;
-                latitude: number;
-                longitude: number;
-                firstImage: string;
-                secondImage: string;
-                thirdImage: string;
-                hostId: number;
-                modId: number;
-                distanceKm: number;
-            }>
-        >`
-            SELECT
-                s."SimID" AS "id",
-                s."SimListName" AS "simListName",
-                s."ListDescription" AS "listDescription",
-                s."PricePerHour" AS "pricePerHour",
-                s."AddressDetail" AS "addressDetail",
-                s."Lat" AS "latitude",
-                s."Long" AS "longitude",
-                s."firstimage" AS "firstImage",
-                s."secondimage" AS "secondImage",
-                s."thirdimage" AS "thirdImage",
-                s."HostID" AS "hostId",
-                s."ModID" AS "modId",
-                ST_DistanceSphere(
-                    ST_MakePoint(s."Long", s."Lat"),
-                    ST_MakePoint(${query.lng}, ${query.lat})
-                ) / 1000.0 AS "distanceKm"
-            FROM "simulatorlist" s
-            WHERE ST_DistanceSphere(
-                ST_MakePoint(s."Long", s."Lat"),
-                ST_MakePoint(${query.lng}, ${query.lat})
-            ) <= ${radiusMeters}
-            ORDER BY "distanceKm" ASC
-            LIMIT ${limit}
-        `;
-
-        return results;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    findNearestLocation(query: FindNearestSimulatorsDto) {
+        return null;
     }
 
     async update(
