@@ -1,7 +1,14 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import {
+    BadRequestException,
+    ForbiddenException,
+    Injectable,
+    Logger,
+    NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateSimulatorDto } from '../host/dto/create-simulator.dto';
 import { UpdateSimulatorDto } from './dto/update-simulator.dto';
+import { FindNearestSimulatorsDto } from './dto/find-nearest-simulators.dto';
 
 interface MulterFile {
     filename: string;
@@ -64,8 +71,7 @@ export class SimulatorService {
         } catch (error) {
             this.logger.error(
                 `Failed to upload simulator for host ${hostId}`,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                error.stack,
+                error instanceof Error ? error.stack : undefined,
             );
             throw new BadRequestException('Failed to upload simulator');
         }
@@ -83,16 +89,153 @@ export class SimulatorService {
         return simulator;
     }
 
-    findNearestLocation() {
-        return `This action returns nearest simulator location`;
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    update(id: number, updateSimulatorDto: UpdateSimulatorDto) {
-        return `This action updates a #${id} simulator`;
+    findNearestLocation(query: FindNearestSimulatorsDto) {
+        return null;
     }
 
-    remove(id: number) {
-        return `This action removes a #${id} simulator`;
+    async update(
+        id: number,
+        updateSimulatorDto: UpdateSimulatorDto,
+        files: {
+            file1?: MulterFile[];
+            file2?: MulterFile[];
+            file3?: MulterFile[];
+        },
+        hostId: number,
+    ) {
+        const simulator = await this.prisma.simulator.findUnique({
+            where: { id },
+            select: { id: true, hostId: true },
+        });
+
+        if (!simulator) {
+            throw new NotFoundException('Simulator not found');
+        }
+
+        if (simulator.hostId !== hostId) {
+            throw new ForbiddenException('You do not own this simulator');
+        }
+
+        const updateData: {
+            simListName?: string;
+            listDescription?: string | null;
+            pricePerHour?: number;
+            modId?: number;
+            addressDetail?: string;
+            latitude?: number;
+            longitude?: number;
+            firstImage?: string;
+            secondImage?: string;
+            thirdImage?: string;
+        } = {};
+
+        if (updateSimulatorDto.simlistname !== undefined) {
+            updateData.simListName = updateSimulatorDto.simlistname;
+        }
+
+        if (updateSimulatorDto.listdescription !== undefined) {
+            updateData.listDescription = updateSimulatorDto.listdescription;
+        }
+
+        if (updateSimulatorDto.priceperhour !== undefined) {
+            updateData.pricePerHour = updateSimulatorDto.priceperhour;
+        }
+
+        if (updateSimulatorDto.modid !== undefined) {
+            updateData.modId = updateSimulatorDto.modid;
+        }
+
+        if (updateSimulatorDto.addressdetail !== undefined) {
+            updateData.addressDetail = updateSimulatorDto.addressdetail;
+        }
+
+        if (updateSimulatorDto.latitude !== undefined) {
+            updateData.latitude = updateSimulatorDto.latitude;
+        }
+
+        if (updateSimulatorDto.longitude !== undefined) {
+            updateData.longitude = updateSimulatorDto.longitude;
+        }
+
+        const file1 = files?.file1?.[0]?.filename;
+        const file2 = files?.file2?.[0]?.filename;
+        const file3 = files?.file3?.[0]?.filename;
+
+        if (file1) updateData.firstImage = file1;
+        if (file2) updateData.secondImage = file2;
+        if (file3) updateData.thirdImage = file3;
+
+        const hasUpdates =
+            Object.keys(updateData).length > 0 ||
+            updateSimulatorDto.simtypeid !== undefined;
+
+        if (!hasUpdates) {
+            throw new BadRequestException('No update fields provided');
+        }
+
+        const updatedSimulator = await this.prisma.$transaction(async (tx) => {
+            const updated = await tx.simulator.update({
+                where: { id },
+                data: updateData,
+            });
+
+            if (updateSimulatorDto.simtypeid) {
+                await tx.simulatorTypeList.deleteMany({
+                    where: { simId: id },
+                });
+                const typeLinks = updateSimulatorDto.simtypeid.map(
+                    (typeId) => ({
+                        simId: id,
+                        simTypeId: typeId,
+                    }),
+                );
+                if (typeLinks.length > 0) {
+                    await tx.simulatorTypeList.createMany({
+                        data: typeLinks,
+                    });
+                }
+            }
+
+            return updated;
+        });
+
+        return updatedSimulator;
+    }
+
+    async remove(id: number, hostId: number) {
+        const simulator = await this.prisma.simulator.findUnique({
+            where: { id },
+            select: { id: true, hostId: true },
+        });
+
+        if (!simulator) {
+            throw new NotFoundException('Simulator not found');
+        }
+
+        if (simulator.hostId !== hostId) {
+            throw new ForbiddenException('You do not own this simulator');
+        }
+
+        const bookingCount = await this.prisma.booking.count({
+            where: {
+                simId: id,
+                statusId: { in: [1, 2] },
+            },
+        });
+
+        if (bookingCount > 0) {
+            throw new BadRequestException(
+                'Cannot delete simulator with active bookings',
+            );
+        }
+
+        await this.prisma.$transaction(async (tx) => {
+            await tx.simulatorTypeList.deleteMany({ where: { simId: id } });
+            await tx.simulatorSchedule.deleteMany({ where: { simId: id } });
+            await tx.simulator.delete({ where: { id } });
+        });
+
+        return { message: 'Simulator deleted successfully' };
     }
 }
