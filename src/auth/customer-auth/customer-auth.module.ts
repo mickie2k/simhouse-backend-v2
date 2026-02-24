@@ -9,28 +9,7 @@ import { createLocalStrategy } from '../strategies/shared-local.strategy';
 import { createJwtStrategy } from '../strategies/shared-jwt.strategy';
 import { createJwtRefreshStrategy } from '../strategies/shared-jwt-refresh.strategy';
 import { createGoogleStrategy } from '../strategies/shared-google.strategy';
-
-// Create customer-specific strategy classes
-const CustomerLocalStrategy = createLocalStrategy('customer-local', {} as any);
-const CustomerJwtStrategy = createJwtStrategy({
-    name: 'customer-jwt',
-    cookieName: 'customer_access_token',
-    role: 'CUSTOMER',
-});
-const CustomerJwtRefreshStrategy = createJwtRefreshStrategy({
-    name: 'customer-jwt-refresh',
-    cookieName: 'customer_refresh_token',
-    role: 'CUSTOMER',
-});
-const CustomerGoogleStrategy = createGoogleStrategy(
-    {
-        name: 'customer-google',
-        callbackURL:
-            process.env.GOOGLE_CUSTOMER_CALLBACK_URL ??
-            process.env.BACKEND_URL + '/auth/customer/google/callback',
-    },
-    {} as any,
-);
+import { AuthenticatedCustomer } from '../types/authenticated-customer.type';
 
 @Module({
     imports: [
@@ -38,7 +17,7 @@ const CustomerGoogleStrategy = createGoogleStrategy(
         PassportModule,
         JwtModule.registerAsync({
             imports: [ConfigModule],
-            useFactory: async (configService: ConfigService) => ({
+            useFactory: (configService: ConfigService) => ({
                 secret: configService.get('JWT_SECRET'),
                 signOptions: {
                     expiresIn:
@@ -51,9 +30,9 @@ const CustomerGoogleStrategy = createGoogleStrategy(
     providers: [
         CustomerAuthService,
         {
-            provide: CustomerLocalStrategy,
+            provide: 'CUSTOMER_LOCAL_STRATEGY',
             useFactory: (authService: CustomerAuthService) => {
-                const Strategy = createLocalStrategy(
+                const Strategy = createLocalStrategy<AuthenticatedCustomer>(
                     'customer-local',
                     authService,
                 );
@@ -62,7 +41,7 @@ const CustomerGoogleStrategy = createGoogleStrategy(
             inject: [CustomerAuthService],
         },
         {
-            provide: CustomerJwtStrategy,
+            provide: 'CUSTOMER_JWT_STRATEGY',
             useFactory: (configService: ConfigService) => {
                 const Strategy = createJwtStrategy({
                     name: 'customer-jwt',
@@ -74,7 +53,7 @@ const CustomerGoogleStrategy = createGoogleStrategy(
             inject: [ConfigService],
         },
         {
-            provide: CustomerJwtRefreshStrategy,
+            provide: 'CUSTOMER_JWT_REFRESH_STRATEGY',
             useFactory: (configService: ConfigService) => {
                 const Strategy = createJwtRefreshStrategy({
                     name: 'customer-jwt-refresh',
@@ -86,12 +65,12 @@ const CustomerGoogleStrategy = createGoogleStrategy(
             inject: [ConfigService],
         },
         {
-            provide: CustomerGoogleStrategy,
+            provide: 'CUSTOMER_GOOGLE_STRATEGY',
             useFactory: (
                 configService: ConfigService,
                 authService: CustomerAuthService,
             ) => {
-                const Strategy = createGoogleStrategy(
+                const Strategy = createGoogleStrategy<AuthenticatedCustomer>(
                     {
                         name: 'customer-google',
                         callbackURL:

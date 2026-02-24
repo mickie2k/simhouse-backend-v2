@@ -1,10 +1,20 @@
 import { Injectable } from '@nestjs/common';
+import type { Type } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 
-export interface GoogleAuthService {
-    validateOrCreateGoogleUser(profile: any): Promise<any>;
+export interface GoogleProfile {
+    id: string;
+    emails?: Array<{ value?: string }>;
+    name?: {
+        givenName?: string;
+        familyName?: string;
+    };
+}
+
+export interface GoogleAuthService<TUser extends object> {
+    validateOrCreateGoogleUser(profile: GoogleProfile): Promise<TUser>;
 }
 
 export interface GoogleStrategyConfig {
@@ -12,10 +22,10 @@ export interface GoogleStrategyConfig {
     callbackURL: string;
 }
 
-export function createGoogleStrategy(
+export function createGoogleStrategy<TUser extends object>(
     config: GoogleStrategyConfig,
-    authService: GoogleAuthService,
-) {
+    authService: GoogleAuthService<TUser>,
+): Type<unknown> {
     @Injectable()
     class GoogleStrategy extends PassportStrategy(Strategy, config.name) {
         constructor(public readonly configService: ConfigService) {
@@ -30,9 +40,9 @@ export function createGoogleStrategy(
         async validate(
             accessToken: string,
             refreshToken: string,
-            profile: any,
+            profile: GoogleProfile,
             done: VerifyCallback,
-        ): Promise<any> {
+        ): Promise<void> {
             try {
                 const user =
                     await authService.validateOrCreateGoogleUser(profile);
@@ -42,5 +52,5 @@ export function createGoogleStrategy(
             }
         }
     }
-    return GoogleStrategy as any;
+    return GoogleStrategy as Type<unknown>;
 }

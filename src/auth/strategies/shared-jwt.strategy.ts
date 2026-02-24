@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import type { Type } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -10,15 +11,32 @@ export interface JwtStrategyConfig {
     role: string;
 }
 
-export function createJwtStrategy(config: JwtStrategyConfig) {
+interface JwtPayload {
+    sub: number;
+    email: string;
+    role: string;
+}
+
+interface AuthenticatedPayload {
+    id: number;
+    email: string;
+    role: string;
+}
+
+export function createJwtStrategy(config: JwtStrategyConfig): Type<unknown> {
+    const extractCookie = (request: Request): string | null => {
+        const cookies = request?.cookies as
+            | Record<string, string | undefined>
+            | undefined;
+        return cookies?.[config.cookieName] ?? null;
+    };
+
     @Injectable()
     class JwtStrategy extends PassportStrategy(Strategy, config.name) {
         constructor(public configService: ConfigService) {
             super({
                 jwtFromRequest: ExtractJwt.fromExtractors([
-                    (request: Request) => {
-                        return request?.cookies?.[config.cookieName];
-                    },
+                    extractCookie,
                     ExtractJwt.fromAuthHeaderAsBearerToken(),
                 ]),
                 ignoreExpiration: false,
@@ -26,18 +44,18 @@ export function createJwtStrategy(config: JwtStrategyConfig) {
             });
         }
 
-        async validate(payload: any) {
+        validate(payload: JwtPayload): Promise<AuthenticatedPayload> {
             if (payload.role !== config.role) {
                 throw new UnauthorizedException(
                     `Invalid token for ${config.role.toLowerCase()}`,
                 );
             }
-            return {
+            return Promise.resolve({
                 id: payload.sub,
                 email: payload.email,
                 role: payload.role,
-            };
+            });
         }
     }
-    return JwtStrategy as any;
+    return JwtStrategy as Type<unknown>;
 }

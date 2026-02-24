@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import type { Type } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -10,16 +11,33 @@ export interface JwtRefreshStrategyConfig {
     role: string;
 }
 
-export function createJwtRefreshStrategy(config: JwtRefreshStrategyConfig) {
+interface JwtPayload {
+    sub: number;
+    email: string;
+    role: string;
+}
+
+interface AuthenticatedPayload {
+    id: number;
+    email: string;
+    role: string;
+}
+
+export function createJwtRefreshStrategy(
+    config: JwtRefreshStrategyConfig,
+): Type<unknown> {
+    const extractCookie = (request: Request): string | null => {
+        const cookies = request?.cookies as
+            | Record<string, string | undefined>
+            | undefined;
+        return cookies?.[config.cookieName] ?? null;
+    };
+
     @Injectable()
     class JwtRefreshStrategy extends PassportStrategy(Strategy, config.name) {
         constructor(public configService: ConfigService) {
             super({
-                jwtFromRequest: ExtractJwt.fromExtractors([
-                    (request: Request) => {
-                        return request?.cookies?.[config.cookieName];
-                    },
-                ]),
+                jwtFromRequest: ExtractJwt.fromExtractors([extractCookie]),
                 ignoreExpiration: false,
                 secretOrKey: configService.get(
                     'JWT_REFRESH_TOKEN_SECRET',
@@ -27,18 +45,18 @@ export function createJwtRefreshStrategy(config: JwtRefreshStrategyConfig) {
             });
         }
 
-        async validate(payload: any) {
+        validate(payload: JwtPayload): Promise<AuthenticatedPayload> {
             if (payload.role !== config.role) {
                 throw new UnauthorizedException(
                     `Invalid refresh token for ${config.role.toLowerCase()}`,
                 );
             }
-            return {
+            return Promise.resolve({
                 id: payload.sub,
                 email: payload.email,
                 role: payload.role,
-            };
+            });
         }
     }
-    return JwtRefreshStrategy as any;
+    return JwtRefreshStrategy as Type<unknown>;
 }

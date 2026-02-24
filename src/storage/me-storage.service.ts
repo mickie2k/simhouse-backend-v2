@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { v4 as uuidv4 } from 'uuid';
-import { access } from 'fs';
+import { randomUUID } from 'crypto';
+// import { access } from 'fs';
 
 @Injectable()
 export class StorageService {
@@ -40,7 +40,7 @@ export class StorageService {
         contentType: string,
         fileSize: number,
     ): Promise<{ uploadUrl: string; key: string }> {
-        const key = `uploads/${uuidv4()}/${filename}`;
+        const key = `uploads/${randomUUID()}/${filename}`;
 
         const command = new PutObjectCommand({
             Bucket: this.bucketName,

@@ -6,8 +6,6 @@ import {
     Param,
     Request,
     UseGuards,
-    HttpStatus,
-    Res,
     Delete,
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
@@ -20,6 +18,8 @@ import {
     ApiParam,
     ApiCookieAuth,
 } from '@nestjs/swagger';
+import type { Request as ExpressRequest } from 'express';
+import { AuthenticatedCustomer } from '../auth/types/authenticated-customer.type';
 
 @ApiTags('booking')
 @ApiCookieAuth('access_token')
@@ -34,7 +34,10 @@ export class BookingController {
     @ApiResponse({ status: 409, description: 'Time slot not available.' })
     @UseGuards(CustomerJwtAuthGuard)
     @Post()
-    async bookingSim(@Body() body: BookingRequestDto, @Request() req) {
+    async bookingSim(
+        @Body() body: BookingRequestDto,
+        @Request() req: ExpressRequest & { user: AuthenticatedCustomer },
+    ) {
         const customerId = req.user.id;
         return this.bookingService.bookingSim(body, customerId);
     }
@@ -47,7 +50,9 @@ export class BookingController {
     @ApiResponse({ status: 401, description: 'Unauthorized.' })
     @UseGuards(CustomerJwtAuthGuard)
     @Get()
-    async bookingFromCustomerID(@Request() req) {
+    async bookingFromCustomerID(
+        @Request() req: ExpressRequest & { user: AuthenticatedCustomer },
+    ) {
         // req.user is set by JwtStrategy validate
         const customerId = req.user.id;
         return this.bookingService.bookingFromCustomerID(customerId);
@@ -65,7 +70,7 @@ export class BookingController {
     @Get(':bookingid/schedule')
     async scheduleFromBookingID(
         @Param('bookingid') bookingid: string,
-        @Request() req,
+        @Request() req: ExpressRequest & { user: AuthenticatedCustomer },
     ) {
         const customerId = req.user.id;
         return this.bookingService.scheduleFromBookingId(
@@ -88,7 +93,10 @@ export class BookingController {
     @ApiResponse({ status: 404, description: 'Booking not found.' })
     @UseGuards(CustomerJwtAuthGuard)
     @Delete(':bookingid')
-    async requestCancel(@Param('bookingid') bookingid: string, @Request() req) {
+    async requestCancel(
+        @Param('bookingid') bookingid: string,
+        @Request() req: ExpressRequest & { user: AuthenticatedCustomer },
+    ) {
         const customerId = req.user.id;
         return this.bookingService.requestCancel(+bookingid, +customerId);
     }

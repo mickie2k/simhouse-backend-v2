@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { CustomerAuthService } from './customer-auth.service';
 import { LoginUserDto, RegisterUserDto } from '../dto/auth.dto';
-import type { Response } from 'express';
+import type { Request as ExpressRequest, Response } from 'express';
 import {
     ApiTags,
     ApiOperation,
@@ -21,6 +21,7 @@ import { CustomerLocalAuthGuard } from './guards/customer-local-auth.guard';
 import { CustomerJwtAuthGuard } from './guards/customer-jwt-auth.guard';
 import { CustomerGoogleAuthGuard } from './guards/customer-google-auth.guard';
 import { CustomerJwtRefreshAuthGuard } from './guards/customer-jwt-refresh.guard';
+import { AuthenticatedCustomer } from '../types/authenticated-customer.type';
 
 @ApiTags('customer-auth')
 @Controller('auth/customer')
@@ -37,7 +38,10 @@ export class CustomerAuthController {
     @ApiResponse({ status: 401, description: 'Invalid credentials.' })
     @UseGuards(CustomerLocalAuthGuard)
     @Post('/login')
-    async login(@Request() req, @Res({ passthrough: true }) res: Response) {
+    async login(
+        @Request() req: ExpressRequest & { user: AuthenticatedCustomer },
+        @Res({ passthrough: true }) res: Response,
+    ) {
         return await this.customerAuthService.login(req.user, res);
     }
 
@@ -65,8 +69,8 @@ export class CustomerAuthController {
     @ApiResponse({ status: 401, description: 'Unauthorized.' })
     @UseGuards(CustomerJwtAuthGuard)
     @Get('/logout')
-    async logout(@Res({ passthrough: true }) res: Response) {
-        return await this.customerAuthService.logout(res);
+    logout(@Res({ passthrough: true }) res: Response) {
+        return this.customerAuthService.logout(res);
     }
 
     @ApiOperation({ summary: 'Refresh customer access token' })
@@ -75,7 +79,10 @@ export class CustomerAuthController {
     @ApiResponse({ status: 401, description: 'Unauthorized.' })
     @UseGuards(CustomerJwtRefreshAuthGuard)
     @Get('/refresh')
-    async refresh(@Request() req, @Res({ passthrough: true }) res: Response) {
+    async refresh(
+        @Request() req: ExpressRequest & { user: AuthenticatedCustomer },
+        @Res({ passthrough: true }) res: Response,
+    ) {
         return await this.customerAuthService.refreshToken(req.user, res);
     }
 
@@ -99,22 +106,9 @@ export class CustomerAuthController {
     @UseGuards(CustomerGoogleAuthGuard)
     @Get('/google/callback')
     async googleAuthCallback(
-        @Request() req,
+        @Request() req: ExpressRequest & { user: AuthenticatedCustomer },
         @Res({ passthrough: true }) res: Response,
     ) {
         return await this.customerAuthService.login(req.user, res, true);
-    }
-
-    @ApiOperation({ summary: 'Get current customer profile' })
-    @ApiCookieAuth('customer_access_token')
-    @ApiResponse({
-        status: 200,
-        description: 'Returns current customer profile.',
-    })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
-    @UseGuards(CustomerJwtAuthGuard)
-    @Get('/profile')
-    async getProfile(@Request() req) {
-        return req.user;
     }
 }

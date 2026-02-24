@@ -9,6 +9,21 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Response } from 'express';
 import * as argon2 from 'argon2';
 import { SignOptions } from 'jsonwebtoken';
+import { AuthenticatedHost } from '../types/authenticated-host.type';
+
+interface GoogleProfile {
+    id: string;
+    emails?: Array<{ value?: string }>;
+    name?: {
+        givenName?: string;
+        familyName?: string;
+    };
+}
+
+type AuthLoginResponse = {
+    message: string;
+    user: AuthenticatedHost;
+};
 
 export interface LoginHostDto {
     email: string;
@@ -45,7 +60,10 @@ export class HostAuthService {
         return Buffer.from(secret, 'base64');
     }
 
-    async validateUser(email: string, password: string) {
+    async validateUser(
+        email: string,
+        password: string,
+    ): Promise<AuthenticatedHost> {
         if (!email || !password) {
             throw new UnauthorizedException('Email and password are required');
         }
@@ -64,14 +82,19 @@ export class HostAuthService {
                 secret: this.secret,
             }))
         ) {
-            const { password: _, ...result } = host;
-            return result;
+            return {
+                id: host.id,
+                email: host.email,
+                role: 'HOST',
+            };
         }
 
         throw new UnauthorizedException('Invalid credentials');
     }
 
-    async validateOrCreateGoogleUser(profile: any) {
+    async validateOrCreateGoogleUser(
+        profile: GoogleProfile,
+    ): Promise<AuthenticatedHost> {
         const email = profile.emails?.[0]?.value;
         if (!email) {
             throw new UnauthorizedException('Email not provided by Google');
@@ -102,11 +125,18 @@ export class HostAuthService {
             });
         }
 
-        const { password: _, ...result } = host;
-        return result;
+        return {
+            id: host.id,
+            email: host.email,
+            role: 'HOST',
+        };
     }
 
-    async login(host: any, res: Response, redirect: boolean = false) {
+    async login(
+        host: AuthenticatedHost,
+        res: Response,
+        redirect: boolean = false,
+    ): Promise<AuthLoginResponse | void> {
         const payload = { sub: host.id, email: host.email, role: 'HOST' };
 
         const accessToken = await this.jwtService.signAsync(payload);
@@ -143,7 +173,11 @@ export class HostAuthService {
         } else {
             return {
                 message: 'Login successful',
-                user: { id: host.id, email: host.email, role: 'HOST' },
+                user: {
+                    id: host.id,
+                    email: host.email,
+                    role: 'HOST',
+                },
             };
         }
     }
@@ -168,17 +202,21 @@ export class HostAuthService {
             },
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password: _, ...result } = host;
         return result;
     }
 
-    async logout(res: Response) {
+    logout(res: Response) {
         res.clearCookie('host_access_token');
         res.clearCookie('host_refresh_token');
         return { message: 'Logout successful' };
     }
 
-    async refreshToken(host: any, res: Response) {
+    async refreshToken(
+        host: AuthenticatedHost,
+        res: Response,
+    ): Promise<{ message: string }> {
         const payload = { sub: host.id, email: host.email, role: 'HOST' };
         const accessToken = await this.jwtService.signAsync(payload);
 

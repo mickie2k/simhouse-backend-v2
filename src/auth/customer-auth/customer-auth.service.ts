@@ -9,7 +9,22 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Response } from 'express';
 import * as argon2 from 'argon2';
 import { SignOptions } from 'jsonwebtoken';
-import { LoginUserDto, RegisterUserDto } from '../dto/auth.dto';
+import { RegisterUserDto } from '../dto/auth.dto';
+import { AuthenticatedCustomer } from '../types/authenticated-customer.type';
+
+interface GoogleProfile {
+    id: string;
+    emails?: Array<{ value?: string }>;
+    name?: {
+        givenName?: string;
+        familyName?: string;
+    };
+}
+
+type AuthLoginResponse = {
+    message: string;
+    user: AuthenticatedCustomer;
+};
 
 @Injectable()
 export class CustomerAuthService {
@@ -32,7 +47,10 @@ export class CustomerAuthService {
         return Buffer.from(secret, 'base64');
     }
 
-    async validateUser(email: string, password: string) {
+    async validateUser(
+        email: string,
+        password: string,
+    ): Promise<AuthenticatedCustomer> {
         if (!email || !password) {
             throw new UnauthorizedException('Email and password are required');
         }
@@ -51,15 +69,19 @@ export class CustomerAuthService {
                 secret: this.secret,
             }))
         ) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { password: _, ...result } = user;
-            return result;
+            return {
+                id: user.id,
+                email: user.email,
+                role: 'CUSTOMER',
+            };
         }
 
         throw new UnauthorizedException('Invalid credentials');
     }
 
-    async validateOrCreateGoogleUser(profile: any) {
+    async validateOrCreateGoogleUser(
+        profile: GoogleProfile,
+    ): Promise<AuthenticatedCustomer> {
         const email = profile.emails?.[0]?.value;
         if (!email) {
             throw new UnauthorizedException('Email not provided by Google');
@@ -88,11 +110,18 @@ export class CustomerAuthService {
             });
         }
 
-        const { password: _, ...result } = user;
-        return result;
+        return {
+            id: user.id,
+            email: user.email,
+            role: 'CUSTOMER',
+        };
     }
 
-    async login(user: any, res: Response, redirect: boolean = false) {
+    async login(
+        user: AuthenticatedCustomer,
+        res: Response,
+        redirect: boolean = false,
+    ): Promise<AuthLoginResponse | void> {
         const payload = { sub: user.id, email: user.email, role: 'CUSTOMER' };
 
         const accessToken = await this.jwtService.signAsync(payload);
@@ -129,7 +158,11 @@ export class CustomerAuthService {
         } else {
             return {
                 message: 'Login successful',
-                user: { id: user.id, email: user.email, role: 'CUSTOMER' },
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    role: 'CUSTOMER',
+                },
             };
         }
     }
@@ -154,17 +187,21 @@ export class CustomerAuthService {
             },
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password: _, ...result } = user;
         return result;
     }
 
-    async logout(res: Response) {
+    logout(res: Response) {
         res.clearCookie('customer_access_token');
         res.clearCookie('customer_refresh_token');
         return { message: 'Logout successful' };
     }
 
-    async refreshToken(user: any, res: Response) {
+    async refreshToken(
+        user: AuthenticatedCustomer,
+        res: Response,
+    ): Promise<{ message: string }> {
         const payload = { sub: user.id, email: user.email, role: 'CUSTOMER' };
         const accessToken = await this.jwtService.signAsync(payload);
 

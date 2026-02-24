@@ -8,8 +8,8 @@ import {
     Res,
 } from '@nestjs/common';
 import { HostAuthService } from './host-auth.service';
-import type { LoginHostDto, RegisterHostDto } from './host-auth.service';
-import type { Response } from 'express';
+import type { RegisterHostDto } from './host-auth.service';
+import type { Request as ExpressRequest, Response } from 'express';
 import {
     ApiTags,
     ApiOperation,
@@ -21,6 +21,7 @@ import { HostLocalAuthGuard } from './guards/host-local-auth.guard';
 import { HostJwtAuthGuard } from './guards/host-jwt-auth.guard';
 import { HostGoogleAuthGuard } from './guards/host-google-auth.guard';
 import { HostJwtRefreshAuthGuard } from './guards/host-jwt-refresh.guard';
+import { AuthenticatedHost } from '../types/authenticated-host.type';
 
 @ApiTags('host-auth')
 @Controller('auth/host')
@@ -45,7 +46,10 @@ export class HostAuthController {
     @ApiResponse({ status: 401, description: 'Invalid credentials.' })
     @UseGuards(HostLocalAuthGuard)
     @Post('/login')
-    async login(@Request() req, @Res({ passthrough: true }) res: Response) {
+    async login(
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+        @Res({ passthrough: true }) res: Response,
+    ) {
         return await this.hostAuthService.login(req.user, res);
     }
 
@@ -92,7 +96,10 @@ export class HostAuthController {
     @ApiResponse({ status: 401, description: 'Unauthorized.' })
     @UseGuards(HostJwtRefreshAuthGuard)
     @Get('/refresh')
-    async refresh(@Request() req, @Res({ passthrough: true }) res: Response) {
+    async refresh(
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+        @Res({ passthrough: true }) res: Response,
+    ) {
         return await this.hostAuthService.refreshToken(req.user, res);
     }
 
@@ -116,7 +123,7 @@ export class HostAuthController {
     @UseGuards(HostGoogleAuthGuard)
     @Get('/google/callback')
     async googleAuthCallback(
-        @Request() req,
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
         @Res({ passthrough: true }) res: Response,
     ) {
         return await this.hostAuthService.login(req.user, res, true);
@@ -128,7 +135,7 @@ export class HostAuthController {
     @ApiResponse({ status: 401, description: 'Unauthorized.' })
     @UseGuards(HostJwtAuthGuard)
     @Get('/profile')
-    async getProfile(@Request() req) {
+    getProfile(@Request() req: ExpressRequest & { user: AuthenticatedHost }) {
         return req.user;
     }
 }

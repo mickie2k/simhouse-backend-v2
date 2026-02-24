@@ -9,28 +9,7 @@ import { createLocalStrategy } from '../strategies/shared-local.strategy';
 import { createJwtStrategy } from '../strategies/shared-jwt.strategy';
 import { createJwtRefreshStrategy } from '../strategies/shared-jwt-refresh.strategy';
 import { createGoogleStrategy } from '../strategies/shared-google.strategy';
-
-// Create host-specific strategy classes
-const HostLocalStrategy = createLocalStrategy('host-local', {} as any);
-const HostJwtStrategy = createJwtStrategy({
-    name: 'host-jwt',
-    cookieName: 'host_access_token',
-    role: 'HOST',
-});
-const HostJwtRefreshStrategy = createJwtRefreshStrategy({
-    name: 'host-jwt-refresh',
-    cookieName: 'host_refresh_token',
-    role: 'HOST',
-});
-const HostGoogleStrategy = createGoogleStrategy(
-    {
-        name: 'host-google',
-        callbackURL:
-            process.env.GOOGLE_HOST_CALLBACK_URL ??
-            process.env.BACKEND_URL + '/auth/host/google/callback',
-    },
-    {} as any,
-);
+import { AuthenticatedHost } from '../types/authenticated-host.type';
 
 @Module({
     imports: [
@@ -38,7 +17,7 @@ const HostGoogleStrategy = createGoogleStrategy(
         PassportModule,
         JwtModule.registerAsync({
             imports: [ConfigModule],
-            useFactory: async (configService: ConfigService) => ({
+            useFactory: (configService: ConfigService) => ({
                 secret: configService.get('JWT_SECRET'),
                 signOptions: {
                     expiresIn:
@@ -51,15 +30,18 @@ const HostGoogleStrategy = createGoogleStrategy(
     providers: [
         HostAuthService,
         {
-            provide: HostLocalStrategy,
+            provide: 'HOST_LOCAL_STRATEGY',
             useFactory: (authService: HostAuthService) => {
-                const Strategy = createLocalStrategy('host-local', authService);
+                const Strategy = createLocalStrategy<AuthenticatedHost>(
+                    'host-local',
+                    authService,
+                );
                 return new Strategy();
             },
             inject: [HostAuthService],
         },
         {
-            provide: HostJwtStrategy,
+            provide: 'HOST_JWT_STRATEGY',
             useFactory: (configService: ConfigService) => {
                 const Strategy = createJwtStrategy({
                     name: 'host-jwt',
@@ -71,7 +53,7 @@ const HostGoogleStrategy = createGoogleStrategy(
             inject: [ConfigService],
         },
         {
-            provide: HostJwtRefreshStrategy,
+            provide: 'HOST_JWT_REFRESH_STRATEGY',
             useFactory: (configService: ConfigService) => {
                 const Strategy = createJwtRefreshStrategy({
                     name: 'host-jwt-refresh',
@@ -83,12 +65,12 @@ const HostGoogleStrategy = createGoogleStrategy(
             inject: [ConfigService],
         },
         {
-            provide: HostGoogleStrategy,
+            provide: 'HOST_GOOGLE_STRATEGY',
             useFactory: (
                 configService: ConfigService,
                 authService: HostAuthService,
             ) => {
-                const Strategy = createGoogleStrategy(
+                const Strategy = createGoogleStrategy<AuthenticatedHost>(
                     {
                         name: 'host-google',
                         callbackURL:
