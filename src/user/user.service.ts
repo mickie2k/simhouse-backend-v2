@@ -11,28 +11,13 @@ import { Prisma } from 'src/generated/prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RegisterUserDto } from 'src/auth/dto/auth.dto';
 import { StorageService } from 'src/storage/storage.service';
-import { FindUserDto } from './dto/user.dto';
+import { FindUserDto } from './dto/find-user.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
 import * as argon2 from 'argon2';
-
-interface UserProfileResponse {
-    id: number;
-    username: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string | null;
-    profileImageUrl: string | null;
-}
-
-interface UserUpdateFields {
-    username?: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    phone?: string;
-}
+import { AuthenticatedCustomer } from 'src/auth/types/authenticated-customer.type';
+import { UserProfileResponse } from './interfaces/user-profile-response.interface';
+import { UserUpdateFields } from './interfaces/user-update-fields.interface';
 
 @Injectable()
 /**
@@ -154,7 +139,9 @@ export class UserService {
         };
     }
 
-    async getUsername(user: any) {
+    async getUsername(
+        user: AuthenticatedCustomer,
+    ): Promise<{ username: string | null }> {
         const res = await this.prisma.user.findFirst({
             where: {
                 id: user.id,
@@ -164,7 +151,7 @@ export class UserService {
             },
         });
         return {
-            username: res?.username,
+            username: res?.username ?? null,
         };
     }
 
