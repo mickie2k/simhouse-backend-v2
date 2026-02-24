@@ -10,6 +10,8 @@ import { HostModule } from './host/host.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SimulatorModule } from './simulator/simulator.module';
 import { StorageModule } from './storage/storage.module';
+import { AdminAuthModule } from './auth/admin-auth/admin-auth.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
     imports: [
@@ -18,10 +20,12 @@ import { StorageModule } from './storage/storage.module';
         UserModule,
         CustomerAuthModule,
         HostAuthModule,
+        AdminAuthModule,
         BookingModule,
         HostModule,
         SimulatorModule,
         StorageModule,
+        AdminModule,
     ],
     controllers: [AppController],
     providers: [AppService],

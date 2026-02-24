@@ -43,6 +43,7 @@ export type UserMinAggregateOutputType = {
   email: string | null
   googleId: string | null
   profileImageUrl: string | null
+  status: $Enums.UserStatus | null
 }
 
 export type UserMaxAggregateOutputType = {
@@ -55,6 +56,7 @@ export type UserMaxAggregateOutputType = {
   email: string | null
   googleId: string | null
   profileImageUrl: string | null
+  status: $Enums.UserStatus | null
 }
 
 export type UserCountAggregateOutputType = {
@@ -67,6 +69,7 @@ export type UserCountAggregateOutputType = {
   email: number
   googleId: number
   profileImageUrl: number
+  status: number
   _all: number
 }
 
@@ -89,6 +92,7 @@ export type UserMinAggregateInputType = {
   email?: true
   googleId?: true
   profileImageUrl?: true
+  status?: true
 }
 
 export type UserMaxAggregateInputType = {
@@ -101,6 +105,7 @@ export type UserMaxAggregateInputType = {
   email?: true
   googleId?: true
   profileImageUrl?: true
+  status?: true
 }
 
 export type UserCountAggregateInputType = {
@@ -113,6 +118,7 @@ export type UserCountAggregateInputType = {
   email?: true
   googleId?: true
   profileImageUrl?: true
+  status?: true
   _all?: true
 }
 
@@ -212,6 +218,7 @@ export type UserGroupByOutputType = {
   email: string
   googleId: string | null
   profileImageUrl: string | null
+  status: $Enums.UserStatus
   _count: UserCountAggregateOutputType | null
   _avg: UserAvgAggregateOutputType | null
   _sum: UserSumAggregateOutputType | null
@@ -247,6 +254,7 @@ export type UserWhereInput = {
   email?: Prisma.StringFilter<"User"> | string
   googleId?: Prisma.StringNullableFilter<"User"> | string | null
   profileImageUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
   bookings?: Prisma.BookingListRelationFilter
 }
 
@@ -260,6 +268,7 @@ export type UserOrderByWithRelationInput = {
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrderInput | Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  status?: Prisma.SortOrder
   bookings?: Prisma.BookingOrderByRelationAggregateInput
 }
 
@@ -276,6 +285,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   password?: Prisma.StringNullableFilter<"User"> | string | null
   phone?: Prisma.StringNullableFilter<"User"> | string | null
   profileImageUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
   bookings?: Prisma.BookingListRelationFilter
 }, "id" | "username" | "email" | "googleId">
 
@@ -289,6 +299,7 @@ export type UserOrderByWithAggregationInput = {
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrderInput | Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  status?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _avg?: Prisma.UserAvgOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
@@ -309,6 +320,7 @@ export type UserScalarWhereWithAggregatesInput = {
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
   googleId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   profileImageUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  status?: Prisma.EnumUserStatusWithAggregatesFilter<"User"> | $Enums.UserStatus
 }
 
 export type UserCreateInput = {
@@ -320,6 +332,7 @@ export type UserCreateInput = {
   email: string
   googleId?: string | null
   profileImageUrl?: string | null
+  status?: $Enums.UserStatus
   bookings?: Prisma.BookingCreateNestedManyWithoutCustomerInput
 }
 
@@ -333,6 +346,7 @@ export type UserUncheckedCreateInput = {
   email: string
   googleId?: string | null
   profileImageUrl?: string | null
+  status?: $Enums.UserStatus
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutCustomerInput
 }
 
@@ -345,6 +359,7 @@ export type UserUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   bookings?: Prisma.BookingUpdateManyWithoutCustomerNestedInput
 }
 
@@ -358,6 +373,7 @@ export type UserUncheckedUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
@@ -371,6 +387,7 @@ export type UserCreateManyInput = {
   email: string
   googleId?: string | null
   profileImageUrl?: string | null
+  status?: $Enums.UserStatus
 }
 
 export type UserUpdateManyMutationInput = {
@@ -382,6 +399,7 @@ export type UserUpdateManyMutationInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
 }
 
 export type UserUncheckedUpdateManyInput = {
@@ -394,6 +412,7 @@ export type UserUncheckedUpdateManyInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
 }
 
 export type UserCountOrderByAggregateInput = {
@@ -406,6 +425,7 @@ export type UserCountOrderByAggregateInput = {
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrder
+  status?: Prisma.SortOrder
 }
 
 export type UserAvgOrderByAggregateInput = {
@@ -422,6 +442,7 @@ export type UserMaxOrderByAggregateInput = {
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrder
+  status?: Prisma.SortOrder
 }
 
 export type UserMinOrderByAggregateInput = {
@@ -434,6 +455,7 @@ export type UserMinOrderByAggregateInput = {
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrder
+  status?: Prisma.SortOrder
 }
 
 export type UserSumOrderByAggregateInput = {
@@ -451,6 +473,10 @@ export type StringFieldUpdateOperationsInput = {
 
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
+}
+
+export type EnumUserStatusFieldUpdateOperationsInput = {
+  set?: $Enums.UserStatus
 }
 
 export type IntFieldUpdateOperationsInput = {
@@ -484,6 +510,7 @@ export type UserCreateWithoutBookingsInput = {
   email: string
   googleId?: string | null
   profileImageUrl?: string | null
+  status?: $Enums.UserStatus
 }
 
 export type UserUncheckedCreateWithoutBookingsInput = {
@@ -496,6 +523,7 @@ export type UserUncheckedCreateWithoutBookingsInput = {
   email: string
   googleId?: string | null
   profileImageUrl?: string | null
+  status?: $Enums.UserStatus
 }
 
 export type UserCreateOrConnectWithoutBookingsInput = {
@@ -523,6 +551,7 @@ export type UserUpdateWithoutBookingsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
 }
 
 export type UserUncheckedUpdateWithoutBookingsInput = {
@@ -535,6 +564,7 @@ export type UserUncheckedUpdateWithoutBookingsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
 }
 
 
@@ -578,6 +608,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   email?: boolean
   googleId?: boolean
   profileImageUrl?: boolean
+  status?: boolean
   bookings?: boolean | Prisma.User$bookingsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
@@ -592,6 +623,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   email?: boolean
   googleId?: boolean
   profileImageUrl?: boolean
+  status?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -604,6 +636,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   email?: boolean
   googleId?: boolean
   profileImageUrl?: boolean
+  status?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
@@ -616,9 +649,10 @@ export type UserSelectScalar = {
   email?: boolean
   googleId?: boolean
   profileImageUrl?: boolean
+  status?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firstName" | "lastName" | "username" | "password" | "phone" | "email" | "googleId" | "profileImageUrl", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firstName" | "lastName" | "username" | "password" | "phone" | "email" | "googleId" | "profileImageUrl" | "status", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   bookings?: boolean | Prisma.User$bookingsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -641,6 +675,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     email: string
     googleId: string | null
     profileImageUrl: string | null
+    status: $Enums.UserStatus
   }, ExtArgs["result"]["user"]>
   composites: {}
 }
@@ -1074,6 +1109,7 @@ export interface UserFieldRefs {
   readonly email: Prisma.FieldRef<"User", 'String'>
   readonly googleId: Prisma.FieldRef<"User", 'String'>
   readonly profileImageUrl: Prisma.FieldRef<"User", 'String'>
+  readonly status: Prisma.FieldRef<"User", 'UserStatus'>
 }
     
 

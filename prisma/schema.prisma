@@ -13,6 +13,39 @@ datasource db {
   extensions = [postgis]
 }
 
+enum AdminRole {
+  SUPER_ADMIN
+  MODERATOR
+  SUPPORT
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_APPROVAL
+  BANNED
+}
+
+enum ReportStatus {
+  PENDING
+  INVESTIGATING
+  RESOLVED
+  DISMISSED
+}
+
+enum ReportedType {
+  USER
+  HOST
+  SIMULATOR
+  REVIEW
+}
+
+enum UserType {
+  CUSTOMER
+  HOST
+  ADMIN
+}
+
 
 // Users and Authentication (matches SQL 'customer' table)
 model User {
@@ -25,6 +58,7 @@ model User {
   email     String    @unique @map("CEmail") @db.VarChar(255)
   googleId  String?   @unique @map("GoogleID") @db.VarChar(255)
   profileImageUrl String? @map("ProfileImageUrl") @db.VarChar(512)
+  status    UserStatus @default(ACTIVE) @map("Status")
   
   bookings  Booking[] @relation("CustomerBookings")
 
@@ -42,6 +76,7 @@ model Host {
   email           String      @unique @map("HEmail") @db.VarChar(255)
   googleId       String?     @unique @map("GoogleID") @db.VarChar(255)
   profileImageUrl String?     @map("ProfileImageUrl") @db.VarChar(512)
+  status          UserStatus  @default(ACTIVE) @map("Status")
   
   simulators      Simulator[]
 
@@ -168,4 +203,31 @@ model BookingList {
 
   @@id([bookingId, scheduleId])
   @@map("bookinglist")
+}
+
+model Admin {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique @db.VarChar(100)
+  password  String    @db.VarChar(255)
+  email     String    @unique @db.VarChar(255)
+  role      AdminRole @default(MODERATOR)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+
+  @@map("admin")
+}
+
+model Report {
+  id           Int          @id @default(autoincrement())
+  reporterId   Int
+  reporterType UserType
+  reportedId   Int
+  reportedType ReportedType
+  reason       String       @db.Text
+  status       ReportStatus @default(PENDING)
+  adminNote    String?      @db.Text
+  createdAt    DateTime     @default(now())
+  resolvedAt   DateTime?
+
+  @@map("report")
 }
