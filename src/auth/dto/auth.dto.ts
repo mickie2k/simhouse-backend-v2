@@ -1,8 +1,13 @@
-import { IsEmail, IsNotEmpty, IsString, IsStrongPassword, MinLength } from 'class-validator';
+import {
+    IsEmail,
+    IsNotEmpty,
+    IsString,
+    IsStrongPassword,
+    MinLength,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginUserDto {
-   
     @ApiProperty({
         description: 'User email address',
         example: 'user@example.com',
@@ -12,18 +17,23 @@ export class LoginUserDto {
     email: string;
 
     @ApiProperty({
-        description: 'User password (min 8 chars, must contain uppercase, lowercase, number, and symbol)',
+        description:
+            'User password (min 8 chars, must contain uppercase, lowercase, number, and symbol)',
         example: 'Password123!',
         minLength: 8,
     })
     @IsNotEmpty()
-    @IsStrongPassword({minLength: 8, minUppercase: 1, minLowercase: 1, minNumbers: 1, minSymbols: 1})
-    password: string
+    @IsStrongPassword({
+        minLength: 8,
+        minUppercase: 1,
+        minLowercase: 1,
+        minNumbers: 1,
+        minSymbols: 1,
+    })
+    password: string;
 }
 
-
-export class RegisterUserDto{
-
+export class RegisterUserDto {
     @ApiProperty({
         description: 'Unique username',
         example: 'johndoe',
@@ -33,7 +43,7 @@ export class RegisterUserDto{
     @IsString()
     @MinLength(4)
     username: string;
-    
+
     @ApiProperty({
         description: 'User email address',
         example: 'john.doe@example.com',
@@ -43,12 +53,19 @@ export class RegisterUserDto{
     email: string;
 
     @ApiProperty({
-        description: 'User password (min 8 chars, must contain uppercase, lowercase, number, and symbol)',
+        description:
+            'User password (min 8 chars, must contain uppercase, lowercase, number, and symbol)',
         example: 'SecurePass123!',
         minLength: 8,
     })
     @IsNotEmpty()
-    @IsStrongPassword({minLength: 8, minUppercase: 1, minLowercase: 1, minNumbers: 1, minSymbols: 1})
+    @IsStrongPassword({
+        minLength: 8,
+        minUppercase: 1,
+        minLowercase: 1,
+        minNumbers: 1,
+        minSymbols: 1,
+    })
     password: string;
 
     @ApiProperty({
@@ -66,6 +83,4 @@ export class RegisterUserDto{
     @IsNotEmpty()
     @IsString()
     lastName: string;
-
-
 }

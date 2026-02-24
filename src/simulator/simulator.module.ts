@@ -4,9 +4,9 @@ import { SimulatorController } from './simulator.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-  imports: [PrismaModule],
-  controllers: [SimulatorController],
-  providers: [SimulatorService],
-  exports: [SimulatorService],
+    imports: [PrismaModule],
+    controllers: [SimulatorController],
+    providers: [SimulatorService],
+    exports: [SimulatorService],
 })
 export class SimulatorModule {}
