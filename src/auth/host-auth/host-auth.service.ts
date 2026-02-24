@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, ConflictException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Response } from 'express';
@@ -33,7 +38,9 @@ export class HostAuthService {
   private getSecret(): Buffer {
     const secret = process.env.AUTH_SECRET;
     if (!secret) {
-      throw new InternalServerErrorException('AUTH_SECRET is not defined in environment variables.');
+      throw new InternalServerErrorException(
+        'AUTH_SECRET is not defined in environment variables.',
+      );
     }
     return Buffer.from(secret, 'base64');
   }
@@ -51,7 +58,10 @@ export class HostAuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    if (host.password && await argon2.verify(host.password, password, { secret: this.secret })) {
+    if (
+      host.password &&
+      (await argon2.verify(host.password, password, { secret: this.secret }))
+    ) {
       const { password: _, ...result } = host;
       return result;
     }
@@ -103,8 +113,10 @@ export class HostAuthService {
       secret: process.env.JWT_REFRESH_TOKEN_SECRET,
     } as SignOptions);
 
-    const cookieAccessTokenExp = Number(process.env.COOKIE_JWT_ACCESS_TOKEN_EXP) || 1;
-    const cookieRefreshTokenExp = Number(process.env.COOKIE_JWT_REFRESH_TOKEN_EXP) || 30;
+    const cookieAccessTokenExp =
+      Number(process.env.COOKIE_JWT_ACCESS_TOKEN_EXP) || 1;
+    const cookieRefreshTokenExp =
+      Number(process.env.COOKIE_JWT_REFRESH_TOKEN_EXP) || 30;
 
     res.cookie('host_access_token', accessToken, {
       httpOnly: true,
@@ -117,7 +129,9 @@ export class HostAuthService {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      expires: new Date(Date.now() + cookieRefreshTokenExp * 1000 * 60 * 60 * 24),
+      expires: new Date(
+        Date.now() + cookieRefreshTokenExp * 1000 * 60 * 60 * 24,
+      ),
     });
 
     if (redirect) {
@@ -139,7 +153,9 @@ export class HostAuthService {
       throw new ConflictException('Host with this email already exists');
     }
 
-    const hashedPassword = await argon2.hash(data.password, { secret: this.secret });
+    const hashedPassword = await argon2.hash(data.password, {
+      secret: this.secret,
+    });
 
     const host = await this.prisma.host.create({
       data: {
@@ -162,7 +178,8 @@ export class HostAuthService {
     const payload = { sub: host.id, email: host.email, role: 'HOST' };
     const accessToken = await this.jwtService.signAsync(payload);
 
-    const cookieAccessTokenExp = Number(process.env.COOKIE_JWT_ACCESS_TOKEN_EXP) || 1;
+    const cookieAccessTokenExp =
+      Number(process.env.COOKIE_JWT_ACCESS_TOKEN_EXP) || 1;
 
     res.cookie('host_access_token', accessToken, {
       httpOnly: true,

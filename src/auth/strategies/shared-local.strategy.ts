@@ -6,7 +6,10 @@ export interface LocalAuthService {
   validateUser(email: string, password: string): Promise<any>;
 }
 
-export function createLocalStrategy(name: string, authService: LocalAuthService) {
+export function createLocalStrategy(
+  name: string,
+  authService: LocalAuthService,
+) {
   @Injectable()
   class LocalStrategy extends PassportStrategy(Strategy, name) {
     constructor() {

@@ -43,6 +43,7 @@ export type HostMinAggregateOutputType = {
   phone: string | null
   email: string | null
   googleId: string | null
+  profileImageUrl: string | null
 }
 
 export type HostMaxAggregateOutputType = {
@@ -54,6 +55,7 @@ export type HostMaxAggregateOutputType = {
   phone: string | null
   email: string | null
   googleId: string | null
+  profileImageUrl: string | null
 }
 
 export type HostCountAggregateOutputType = {
@@ -65,6 +67,7 @@ export type HostCountAggregateOutputType = {
   phone: number
   email: number
   googleId: number
+  profileImageUrl: number
   _all: number
 }
 
@@ -86,6 +89,7 @@ export type HostMinAggregateInputType = {
   phone?: true
   email?: true
   googleId?: true
+  profileImageUrl?: true
 }
 
 export type HostMaxAggregateInputType = {
@@ -97,6 +101,7 @@ export type HostMaxAggregateInputType = {
   phone?: true
   email?: true
   googleId?: true
+  profileImageUrl?: true
 }
 
 export type HostCountAggregateInputType = {
@@ -108,6 +113,7 @@ export type HostCountAggregateInputType = {
   phone?: true
   email?: true
   googleId?: true
+  profileImageUrl?: true
   _all?: true
 }
 
@@ -206,6 +212,7 @@ export type HostGroupByOutputType = {
   phone: string
   email: string
   googleId: string | null
+  profileImageUrl: string | null
   _count: HostCountAggregateOutputType | null
   _avg: HostAvgAggregateOutputType | null
   _sum: HostSumAggregateOutputType | null
@@ -240,6 +247,7 @@ export type HostWhereInput = {
   phone?: Prisma.StringFilter<"Host"> | string
   email?: Prisma.StringFilter<"Host"> | string
   googleId?: Prisma.StringNullableFilter<"Host"> | string | null
+  profileImageUrl?: Prisma.StringNullableFilter<"Host"> | string | null
   simulators?: Prisma.SimulatorListRelationFilter
 }
 
@@ -252,6 +260,7 @@ export type HostOrderByWithRelationInput = {
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   simulators?: Prisma.SimulatorOrderByRelationAggregateInput
 }
 
@@ -267,6 +276,7 @@ export type HostWhereUniqueInput = Prisma.AtLeast<{
   lastName?: Prisma.StringFilter<"Host"> | string
   password?: Prisma.StringFilter<"Host"> | string
   phone?: Prisma.StringFilter<"Host"> | string
+  profileImageUrl?: Prisma.StringNullableFilter<"Host"> | string | null
   simulators?: Prisma.SimulatorListRelationFilter
 }, "id" | "username" | "email" | "googleId">
 
@@ -279,6 +289,7 @@ export type HostOrderByWithAggregationInput = {
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.HostCountOrderByAggregateInput
   _avg?: Prisma.HostAvgOrderByAggregateInput
   _max?: Prisma.HostMaxOrderByAggregateInput
@@ -298,6 +309,7 @@ export type HostScalarWhereWithAggregatesInput = {
   phone?: Prisma.StringWithAggregatesFilter<"Host"> | string
   email?: Prisma.StringWithAggregatesFilter<"Host"> | string
   googleId?: Prisma.StringNullableWithAggregatesFilter<"Host"> | string | null
+  profileImageUrl?: Prisma.StringNullableWithAggregatesFilter<"Host"> | string | null
 }
 
 export type HostCreateInput = {
@@ -308,6 +320,7 @@ export type HostCreateInput = {
   phone: string
   email: string
   googleId?: string | null
+  profileImageUrl?: string | null
   simulators?: Prisma.SimulatorCreateNestedManyWithoutHostInput
 }
 
@@ -320,6 +333,7 @@ export type HostUncheckedCreateInput = {
   phone: string
   email: string
   googleId?: string | null
+  profileImageUrl?: string | null
   simulators?: Prisma.SimulatorUncheckedCreateNestedManyWithoutHostInput
 }
 
@@ -331,6 +345,7 @@ export type HostUpdateInput = {
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   simulators?: Prisma.SimulatorUpdateManyWithoutHostNestedInput
 }
 
@@ -343,6 +358,7 @@ export type HostUncheckedUpdateInput = {
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   simulators?: Prisma.SimulatorUncheckedUpdateManyWithoutHostNestedInput
 }
 
@@ -355,6 +371,7 @@ export type HostCreateManyInput = {
   phone: string
   email: string
   googleId?: string | null
+  profileImageUrl?: string | null
 }
 
 export type HostUpdateManyMutationInput = {
@@ -365,6 +382,7 @@ export type HostUpdateManyMutationInput = {
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type HostUncheckedUpdateManyInput = {
@@ -376,6 +394,7 @@ export type HostUncheckedUpdateManyInput = {
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type HostCountOrderByAggregateInput = {
@@ -387,6 +406,7 @@ export type HostCountOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrder
+  profileImageUrl?: Prisma.SortOrder
 }
 
 export type HostAvgOrderByAggregateInput = {
@@ -402,6 +422,7 @@ export type HostMaxOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrder
+  profileImageUrl?: Prisma.SortOrder
 }
 
 export type HostMinOrderByAggregateInput = {
@@ -413,6 +434,7 @@ export type HostMinOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrder
+  profileImageUrl?: Prisma.SortOrder
 }
 
 export type HostSumOrderByAggregateInput = {
@@ -446,6 +468,7 @@ export type HostCreateWithoutSimulatorsInput = {
   phone: string
   email: string
   googleId?: string | null
+  profileImageUrl?: string | null
 }
 
 export type HostUncheckedCreateWithoutSimulatorsInput = {
@@ -457,6 +480,7 @@ export type HostUncheckedCreateWithoutSimulatorsInput = {
   phone: string
   email: string
   googleId?: string | null
+  profileImageUrl?: string | null
 }
 
 export type HostCreateOrConnectWithoutSimulatorsInput = {
@@ -483,6 +507,7 @@ export type HostUpdateWithoutSimulatorsInput = {
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type HostUncheckedUpdateWithoutSimulatorsInput = {
@@ -494,6 +519,7 @@ export type HostUncheckedUpdateWithoutSimulatorsInput = {
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -536,6 +562,7 @@ export type HostSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   phone?: boolean
   email?: boolean
   googleId?: boolean
+  profileImageUrl?: boolean
   simulators?: boolean | Prisma.Host$simulatorsArgs<ExtArgs>
   _count?: boolean | Prisma.HostCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["host"]>
@@ -549,6 +576,7 @@ export type HostSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   phone?: boolean
   email?: boolean
   googleId?: boolean
+  profileImageUrl?: boolean
 }, ExtArgs["result"]["host"]>
 
 export type HostSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -560,6 +588,7 @@ export type HostSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   phone?: boolean
   email?: boolean
   googleId?: boolean
+  profileImageUrl?: boolean
 }, ExtArgs["result"]["host"]>
 
 export type HostSelectScalar = {
@@ -571,9 +600,10 @@ export type HostSelectScalar = {
   phone?: boolean
   email?: boolean
   googleId?: boolean
+  profileImageUrl?: boolean
 }
 
-export type HostOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firstName" | "lastName" | "username" | "password" | "phone" | "email" | "googleId", ExtArgs["result"]["host"]>
+export type HostOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firstName" | "lastName" | "username" | "password" | "phone" | "email" | "googleId" | "profileImageUrl", ExtArgs["result"]["host"]>
 export type HostInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   simulators?: boolean | Prisma.Host$simulatorsArgs<ExtArgs>
   _count?: boolean | Prisma.HostCountOutputTypeDefaultArgs<ExtArgs>
@@ -595,6 +625,7 @@ export type $HostPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     phone: string
     email: string
     googleId: string | null
+    profileImageUrl: string | null
   }, ExtArgs["result"]["host"]>
   composites: {}
 }
@@ -1027,6 +1058,7 @@ export interface HostFieldRefs {
   readonly phone: Prisma.FieldRef<"Host", 'String'>
   readonly email: Prisma.FieldRef<"Host", 'String'>
   readonly googleId: Prisma.FieldRef<"Host", 'String'>
+  readonly profileImageUrl: Prisma.FieldRef<"Host", 'String'>
 }
     
 

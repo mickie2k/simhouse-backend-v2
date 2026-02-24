@@ -3,10 +3,11 @@ import { HostService } from './host.service';
 import { HostController } from './host.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { SimulatorModule } from 'src/simulator/simulator.module';
+import { StorageModule } from 'src/storage/storage.module';
 
 @Module({
-  imports: [PrismaModule, SimulatorModule],
-  controllers: [HostController],
-  providers: [HostService],
+    imports: [PrismaModule, SimulatorModule, StorageModule],
+    controllers: [HostController],
+    providers: [HostService],
 })
 export class HostModule {}

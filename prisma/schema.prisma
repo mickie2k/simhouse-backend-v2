@@ -24,6 +24,7 @@ model User {
   phone     String?   @map("CTel") @db.VarChar(10)
   email     String    @unique @map("CEmail") @db.VarChar(255)
   googleId  String?   @unique @map("GoogleID") @db.VarChar(255)
+  profileImageUrl String? @map("ProfileImageUrl") @db.VarChar(512)
   
   bookings  Booking[] @relation("CustomerBookings")
 
@@ -40,6 +41,7 @@ model Host {
   phone           String      @map("Htel") @db.VarChar(10)
   email           String      @unique @map("HEmail") @db.VarChar(255)
   googleId       String?     @unique @map("GoogleID") @db.VarChar(255)
+  profileImageUrl String?     @map("ProfileImageUrl") @db.VarChar(512)
   
   simulators      Simulator[]
 

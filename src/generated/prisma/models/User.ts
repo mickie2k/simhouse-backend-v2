@@ -43,6 +43,7 @@ export type UserMinAggregateOutputType = {
   phone: string | null
   email: string | null
   googleId: string | null
+  profileImageUrl: string | null
 }
 
 export type UserMaxAggregateOutputType = {
@@ -54,6 +55,7 @@ export type UserMaxAggregateOutputType = {
   phone: string | null
   email: string | null
   googleId: string | null
+  profileImageUrl: string | null
 }
 
 export type UserCountAggregateOutputType = {
@@ -65,6 +67,7 @@ export type UserCountAggregateOutputType = {
   phone: number
   email: number
   googleId: number
+  profileImageUrl: number
   _all: number
 }
 
@@ -86,6 +89,7 @@ export type UserMinAggregateInputType = {
   phone?: true
   email?: true
   googleId?: true
+  profileImageUrl?: true
 }
 
 export type UserMaxAggregateInputType = {
@@ -97,6 +101,7 @@ export type UserMaxAggregateInputType = {
   phone?: true
   email?: true
   googleId?: true
+  profileImageUrl?: true
 }
 
 export type UserCountAggregateInputType = {
@@ -108,6 +113,7 @@ export type UserCountAggregateInputType = {
   phone?: true
   email?: true
   googleId?: true
+  profileImageUrl?: true
   _all?: true
 }
 
@@ -206,6 +212,7 @@ export type UserGroupByOutputType = {
   phone: string | null
   email: string
   googleId: string | null
+  profileImageUrl: string | null
   _count: UserCountAggregateOutputType | null
   _avg: UserAvgAggregateOutputType | null
   _sum: UserSumAggregateOutputType | null
@@ -240,6 +247,7 @@ export type UserWhereInput = {
   phone?: Prisma.StringNullableFilter<"User"> | string | null
   email?: Prisma.StringFilter<"User"> | string
   googleId?: Prisma.StringNullableFilter<"User"> | string | null
+  profileImageUrl?: Prisma.StringNullableFilter<"User"> | string | null
   bookings?: Prisma.BookingListRelationFilter
 }
 
@@ -252,6 +260,7 @@ export type UserOrderByWithRelationInput = {
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   bookings?: Prisma.BookingOrderByRelationAggregateInput
 }
 
@@ -267,6 +276,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   lastName?: Prisma.StringFilter<"User"> | string
   password?: Prisma.StringNullableFilter<"User"> | string | null
   phone?: Prisma.StringNullableFilter<"User"> | string | null
+  profileImageUrl?: Prisma.StringNullableFilter<"User"> | string | null
   bookings?: Prisma.BookingListRelationFilter
 }, "id" | "username" | "email" | "googleId">
 
@@ -279,6 +289,7 @@ export type UserOrderByWithAggregationInput = {
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _avg?: Prisma.UserAvgOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
@@ -298,6 +309,7 @@ export type UserScalarWhereWithAggregatesInput = {
   phone?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
   googleId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  profileImageUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
 }
 
 export type UserCreateInput = {
@@ -308,6 +320,7 @@ export type UserCreateInput = {
   phone?: string | null
   email: string
   googleId?: string | null
+  profileImageUrl?: string | null
   bookings?: Prisma.BookingCreateNestedManyWithoutCustomerInput
 }
 
@@ -320,6 +333,7 @@ export type UserUncheckedCreateInput = {
   phone?: string | null
   email: string
   googleId?: string | null
+  profileImageUrl?: string | null
   bookings?: Prisma.BookingUncheckedCreateNestedManyWithoutCustomerInput
 }
 
@@ -331,6 +345,7 @@ export type UserUpdateInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bookings?: Prisma.BookingUpdateManyWithoutCustomerNestedInput
 }
 
@@ -343,6 +358,7 @@ export type UserUncheckedUpdateInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bookings?: Prisma.BookingUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
@@ -355,6 +371,7 @@ export type UserCreateManyInput = {
   phone?: string | null
   email: string
   googleId?: string | null
+  profileImageUrl?: string | null
 }
 
 export type UserUpdateManyMutationInput = {
@@ -365,6 +382,7 @@ export type UserUpdateManyMutationInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type UserUncheckedUpdateManyInput = {
@@ -376,6 +394,7 @@ export type UserUncheckedUpdateManyInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type UserCountOrderByAggregateInput = {
@@ -387,6 +406,7 @@ export type UserCountOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrder
+  profileImageUrl?: Prisma.SortOrder
 }
 
 export type UserAvgOrderByAggregateInput = {
@@ -402,6 +422,7 @@ export type UserMaxOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrder
+  profileImageUrl?: Prisma.SortOrder
 }
 
 export type UserMinOrderByAggregateInput = {
@@ -413,6 +434,7 @@ export type UserMinOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrder
   googleId?: Prisma.SortOrder
+  profileImageUrl?: Prisma.SortOrder
 }
 
 export type UserSumOrderByAggregateInput = {
@@ -462,6 +484,7 @@ export type UserCreateWithoutBookingsInput = {
   phone?: string | null
   email: string
   googleId?: string | null
+  profileImageUrl?: string | null
 }
 
 export type UserUncheckedCreateWithoutBookingsInput = {
@@ -473,6 +496,7 @@ export type UserUncheckedCreateWithoutBookingsInput = {
   phone?: string | null
   email: string
   googleId?: string | null
+  profileImageUrl?: string | null
 }
 
 export type UserCreateOrConnectWithoutBookingsInput = {
@@ -499,6 +523,7 @@ export type UserUpdateWithoutBookingsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type UserUncheckedUpdateWithoutBookingsInput = {
@@ -510,6 +535,7 @@ export type UserUncheckedUpdateWithoutBookingsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
   googleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -552,6 +578,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   phone?: boolean
   email?: boolean
   googleId?: boolean
+  profileImageUrl?: boolean
   bookings?: boolean | Prisma.User$bookingsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
@@ -565,6 +592,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   phone?: boolean
   email?: boolean
   googleId?: boolean
+  profileImageUrl?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -576,6 +604,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   phone?: boolean
   email?: boolean
   googleId?: boolean
+  profileImageUrl?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
@@ -587,9 +616,10 @@ export type UserSelectScalar = {
   phone?: boolean
   email?: boolean
   googleId?: boolean
+  profileImageUrl?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firstName" | "lastName" | "username" | "password" | "phone" | "email" | "googleId", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firstName" | "lastName" | "username" | "password" | "phone" | "email" | "googleId" | "profileImageUrl", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   bookings?: boolean | Prisma.User$bookingsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -611,6 +641,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     phone: string | null
     email: string
     googleId: string | null
+    profileImageUrl: string | null
   }, ExtArgs["result"]["user"]>
   composites: {}
 }
@@ -1043,6 +1074,7 @@ export interface UserFieldRefs {
   readonly phone: Prisma.FieldRef<"User", 'String'>
   readonly email: Prisma.FieldRef<"User", 'String'>
   readonly googleId: Prisma.FieldRef<"User", 'String'>
+  readonly profileImageUrl: Prisma.FieldRef<"User", 'String'>
 }
     
 

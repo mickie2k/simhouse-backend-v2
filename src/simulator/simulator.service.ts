@@ -66,11 +66,19 @@ export class SimulatorService {
 
 
   findAll() {
-    return `This action returns all simulator`;
+    const simulators = this.prisma.simulator.findMany();
+    return simulators;
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} simulator`;
+    const simulator = this.prisma.simulator.findUnique({
+      where: { id },
+    });
+    return simulator;
+  }
+
+  findNearestLocation() {
+    return `This action returns nearest simulator location`;
   }
 
   update(id: number, updateSimulatorDto: UpdateSimulatorDto) {

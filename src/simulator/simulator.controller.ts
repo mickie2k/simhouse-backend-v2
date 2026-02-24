@@ -25,6 +25,11 @@ export class SimulatorController {
     return this.simulatorService.findOne(+id);
   }
 
+  @Get()
+  findNearestLocation() {
+    return this.simulatorService.findNearestLocation();
+  }
+
   @ApiOperation({ summary: 'Update a simulator' })
   @ApiParam({ name: 'id', description: 'Simulator ID', type: 'number' })
   @ApiResponse({ status: 200, description: 'Simulator updated successfully.' })

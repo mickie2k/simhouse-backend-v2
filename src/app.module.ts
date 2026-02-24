@@ -9,19 +9,21 @@ import { BookingModule } from './booking/booking.module';
 import { HostModule } from './host/host.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SimulatorModule } from './simulator/simulator.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }), // Makes the config accessible throughout the app
-    PrismaModule,
-    UserModule,
-    CustomerAuthModule,
-    HostAuthModule,
-    BookingModule,
-    HostModule,
-    SimulatorModule,
-  ],
-  controllers: [AppController],
-  providers: [AppService],
+    imports: [
+        ConfigModule.forRoot({ isGlobal: true }), // Makes the config accessible throughout the app
+        PrismaModule,
+        UserModule,
+        CustomerAuthModule,
+        HostAuthModule,
+        BookingModule,
+        HostModule,
+        SimulatorModule,
+        StorageModule,
+    ],
+    controllers: [AppController],
+    providers: [AppService],
 })
 export class AppModule {}
