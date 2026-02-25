@@ -9,6 +9,15 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateSimulatorDto } from '../host/dto/create-simulator.dto';
 import { UpdateSimulatorDto } from './dto/update-simulator.dto';
 import { FindNearestSimulatorsDto } from './dto/find-nearest-simulators.dto';
+import {
+    SimulatorQueryDto,
+    SimulatorSortBy,
+    SortOrder,
+} from './dto/simulator-query.dto';
+import {
+    createPaginatedResponse,
+    PaginatedResponseDto,
+} from '../common/dto/paginated-response.dto';
 
 interface MulterFile {
     filename: string;
@@ -77,9 +86,55 @@ export class SimulatorService {
         }
     }
 
-    findAll() {
-        const simulators = this.prisma.simulator.findMany();
-        return simulators;
+    async findAll(
+        query: SimulatorQueryDto,
+    ): Promise<PaginatedResponseDto<object>> {
+        const page = query.page ?? 1;
+        const limit = query.limit ?? 10;
+        const skip = (page - 1) * limit;
+        const sortBy = query.sortBy ?? SimulatorSortBy.ID;
+        const sortOrder = query.sortOrder ?? SortOrder.ASC;
+
+        // Build price filter
+        const priceFilter: { gte?: number; lte?: number } = {};
+        if (query.minPrice !== undefined) priceFilter.gte = query.minPrice;
+        if (query.maxPrice !== undefined) priceFilter.lte = query.maxPrice;
+        const hasPriceFilter = Object.keys(priceFilter).length > 0;
+
+        // Build WHERE clause
+        const where = {
+            ...(hasPriceFilter && {
+                pricePerHour: priceFilter,
+            }),
+            ...(query.simTypeIds &&
+                query.simTypeIds.length > 0 && {
+                    typeList: {
+                        some: {
+                            simTypeId: { in: query.simTypeIds },
+                        },
+                    },
+                }),
+        };
+
+        const [simulators, total] = await this.prisma.$transaction([
+            this.prisma.simulator.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { [sortBy]: sortOrder },
+                include: {
+                    mod: {
+                        include: { brand: true },
+                    },
+                    typeList: {
+                        include: { simType: true },
+                    },
+                },
+            }),
+            this.prisma.simulator.count({ where }),
+        ]);
+
+        return createPaginatedResponse(simulators, total, page, limit);
     }
 
     findOne(id: number) {
