@@ -24,6 +24,11 @@ import {
     ApiTags,
 } from '@nestjs/swagger';
 import { FindNearestSimulatorsDto } from './dto/find-nearest-simulators.dto';
+import {
+    SimulatorQueryDto,
+    SimulatorSortBy,
+    SortOrder,
+} from './dto/simulator-query.dto';
 import { HostJwtAuthGuard } from '../auth/host-auth/guards/host-jwt-auth.guard';
 import type { Request as ExpressRequest } from 'express';
 import { AuthenticatedHost } from '../auth/types/authenticated-host.type';
@@ -42,13 +47,62 @@ export class SimulatorController {
     constructor(private readonly simulatorService: SimulatorService) {}
 
     @ApiOperation({ summary: 'Get all simulators' })
+    @ApiQuery({
+        name: 'page',
+        type: Number,
+        required: false,
+        description: 'Page number (1-indexed, default: 1)',
+        example: 1,
+    })
+    @ApiQuery({
+        name: 'limit',
+        type: Number,
+        required: false,
+        description: 'Items per page (1-100, default: 10)',
+        example: 10,
+    })
+    @ApiQuery({
+        name: 'minPrice',
+        type: Number,
+        required: false,
+        description: 'Minimum price per hour filter',
+        example: 100,
+    })
+    @ApiQuery({
+        name: 'maxPrice',
+        type: Number,
+        required: false,
+        description: 'Maximum price per hour filter',
+        example: 500,
+    })
+    @ApiQuery({
+        name: 'simTypeIds',
+        type: String,
+        required: false,
+        description:
+            'Filter by simulator type IDs (comma-separated, e.g. 1,2,3)',
+        example: '1,2',
+    })
+    @ApiQuery({
+        name: 'sortBy',
+        enum: SimulatorSortBy,
+        required: false,
+        description: 'Field to sort by',
+    })
+    @ApiQuery({
+        name: 'sortOrder',
+        enum: SortOrder,
+        required: false,
+        description: 'Sort direction',
+    })
     @ApiResponse({
         status: 200,
-        description: 'Simulators retrieved successfully.',
+        description:
+            'Simulators retrieved successfully with pagination metadata.',
     })
     @Get()
-    findAll() {
-        return this.simulatorService.findAll();
+    findAll(@Query() query: SimulatorQueryDto) {
+        return this.simulatorService.findAll(query);
     }
 
     @ApiOperation({ summary: 'Find nearest simulators within radius (km)' })
