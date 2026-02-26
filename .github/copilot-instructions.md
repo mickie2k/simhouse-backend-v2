@@ -421,10 +421,12 @@ export class ConfigService {
 - [ ] Performance considerations (caching, database optimization)
 - [ ] Comprehensive testing coverage
 
-# Git workflow
+## Git Workflow
 
-- For any new feature, create a new branch named feature/<short-slug> before making changes.
-- For fixes/refactors, use fix/<short-slug> or chore/<short-slug>.
+- Create feature branches: `feature/short-description`.
+- Fix branches: `fix/short-description`.
+- Commit messages should be clear and concise.
+- **Pull Requests:** When a task is complete, verify all tests pass and then create a Pull Request (PR) to merge changes into the main branch. Use the `gh` tool if available.
 
 ## Conclusion
 
