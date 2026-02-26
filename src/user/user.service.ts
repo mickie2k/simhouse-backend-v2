@@ -9,7 +9,6 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from 'src/generated/prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { RegisterUserDto } from 'src/auth/dto/auth.dto';
 import { StorageService } from 'src/storage/storage.service';
 import { FindUserDto } from './dto/find-user.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
@@ -35,18 +34,6 @@ export class UserService {
         private readonly storageService: StorageService,
     ) {
         this.secret = this.getSecret();
-    }
-
-    async createUser(data: RegisterUserDto) {
-        try {
-            const user = await this.prisma.user.create({
-                data: data,
-            });
-            return user;
-        } catch (error) {
-            console.log(error);
-            throw new Error('Failed to create user');
-        }
     }
 
     async findUser(data: FindUserDto) {
@@ -135,7 +122,7 @@ export class UserService {
             lastName: userRes.lastName,
             email: userRes.email,
             phone: userRes.phone,
-            profileImageUrl: userRes.profileImageUrl,
+            profileImageUrl: userRes.profileImageUrl as string,
         };
     }
 

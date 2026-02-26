@@ -8,7 +8,7 @@ import {
     Request,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto, FindUserDto } from './dto/user.dto';
+import { FindUserDto } from './dto/find-user.dto';
 import { CustomerJwtAuthGuard } from 'src/auth/customer-auth/guards/customer-jwt-auth.guard';
 import {
     ApiBody,
@@ -109,14 +109,6 @@ export class UserController {
         @Request() req: ExpressRequest & { user: AuthenticatedCustomer },
     ): Promise<unknown> {
         return this.userService.updateAvatar(req.user.id, data.objectKey);
-    }
-
-    @ApiOperation({ summary: 'Create a new user' })
-    @ApiResponse({ status: 201, description: 'User created successfully.' })
-    @ApiResponse({ status: 400, description: 'Validation failed.' })
-    @Post()
-    createUser(@Body() data: CreateUserDto): Promise<unknown> {
-        return this.userService.createUser(data);
     }
 
     @ApiOperation({ summary: 'Find user by email (Admin only)' })

@@ -28,16 +28,34 @@ interface PresignedUploadResult {
 @Injectable()
 export class StorageService {
     private readonly s3Client: S3Client;
+    private bucketName: string;
+    private region: string;
 
     constructor(private readonly configService: ConfigService) {
-        const region = this.getRequiredConfig('S3_REGION');
-        this.s3Client = new S3Client({ region });
+        this.region = this.configService.get('AWS_REGION') as string;
+        this.bucketName = this.configService.get('S3_BUCKET') as string;
+        if (!this.region || !this.bucketName) {
+            throw new InternalServerErrorException(
+                'Missing required S3 configuration',
+            );
+        }
+
+        this.s3Client = new S3Client({
+            region: this.region,
+            // Performance optimizations
+            maxAttempts: 3,
+            requestHandler: {
+                connectionTimeout: 5000,
+                socketTimeout: 5000,
+            },
+        });
     }
 
     async createPresignedUploadUrl(
         params: CreatePresignedUploadUrlParams,
     ): Promise<PresignedUploadResult> {
-        const bucketName = this.getRequiredConfig('S3_BUCKET');
+        this.validateContentType(params.contentType);
+        const bucketName = this.bucketName;
         const expiresInSeconds = this.getPresignedUrlExpirySeconds();
         const objectKey = this.buildObjectKey(
             params.userType,
@@ -66,7 +84,6 @@ export class StorageService {
         userId: number,
         contentType: AllowedContentType,
     ): string {
-        this.validateContentType(contentType);
         const prefix =
             this.configService.get<string>('S3_AVATAR_PREFIX') ?? 'avatars';
         const extension = this.getFileExtension(contentType);
@@ -86,6 +103,7 @@ export class StorageService {
     }
 
     private getFileExtension(contentType: AllowedContentType): string {
+        // Record type is for static and run at compile time, so this is safe and efficient
         const extensionMap: Record<AllowedContentType, string> = {
             'image/jpeg': 'jpg',
             'image/png': 'png',
@@ -113,18 +131,8 @@ export class StorageService {
         if (baseUrl && baseUrl.length > 0) {
             return baseUrl.replace(/\/+$/, '');
         }
-        const bucketName = this.getRequiredConfig('S3_BUCKET');
-        const region = this.getRequiredConfig('S3_REGION');
+        const bucketName = this.bucketName;
+        const region = this.region;
         return `https://${bucketName}.s3.${region}.amazonaws.com`;
-    }
-
-    private getRequiredConfig(key: string): string {
-        const value = this.configService.get<string>(key);
-        if (!value) {
-            throw new InternalServerErrorException(
-                `${key} is not defined in environment variables.`,
-            );
-        }
-        return value;
     }
 }
