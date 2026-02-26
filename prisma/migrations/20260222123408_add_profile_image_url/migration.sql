@@ -1,5 +1,3 @@
--- CreateExtension
-CREATE EXTENSION IF NOT EXISTS "postgis";
 
 -- AlterTable
 ALTER TABLE "customer" ADD COLUMN     "ProfileImageUrl" VARCHAR(512);
