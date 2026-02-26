@@ -86,8 +86,8 @@ export class HostAuthController {
     @ApiResponse({ status: 401, description: 'Unauthorized.' })
     @UseGuards(HostJwtAuthGuard)
     @Get('/logout')
-    async logout(@Res({ passthrough: true }) res: Response) {
-        return await this.hostAuthService.logout(res);
+    logout(@Res({ passthrough: true }) res: Response) {
+        return this.hostAuthService.logout(res);
     }
 
     @ApiOperation({ summary: 'Refresh host access token' })

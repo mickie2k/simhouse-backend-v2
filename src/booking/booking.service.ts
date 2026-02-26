@@ -109,6 +109,7 @@ export class BookingService {
             });
 
             if (
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 (claim.count ?? (claim as any).affected ?? 0) !==
                 bookingData.scheduleId.length
             ) {
