@@ -3,12 +3,20 @@ import { AppModule } from './app.module';
 import { GenericExceptionFilter } from './common/filters/generic-exception.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
+    app.enableCors({
+        origin: true,
+        credentials: true,
+    });
+
     // Register global exception filter to mask internal errors while logging them
     app.useGlobalFilters(new GenericExceptionFilter());
+
+    app.use(cookieParser());
 
     // Enable validation pipe globally
     app.useGlobalPipes(
@@ -28,16 +36,28 @@ async function bootstrap() {
         .addTag('booking', 'Booking management endpoints')
         .addTag('host', 'Host management endpoints')
         .addTag('simulator', 'Simulator management endpoints')
-        .addCookieAuth('access_token', {
+        .addCookieAuth('customer_access_token', {
             type: 'apiKey',
             in: 'cookie',
-            name: 'access_token',
+            name: 'customer_access_token',
             description: 'JWT access token stored in cookie',
         })
-        .addCookieAuth('refresh_token', {
+        .addCookieAuth('customer_refresh_token', {
             type: 'apiKey',
             in: 'cookie',
-            name: 'refresh_token',
+            name: 'customer_refresh_token',
+            description: 'JWT refresh token stored in cookie',
+        })
+        .addCookieAuth('host_access_token', {
+            type: 'apiKey',
+            in: 'cookie',
+            name: 'host_access_token',
+            description: 'JWT access token stored in cookie',
+        })
+        .addCookieAuth('host_refresh_token', {
+            type: 'apiKey',
+            in: 'cookie',
+            name: 'host_refresh_token',
             description: 'JWT refresh token stored in cookie',
         })
         .build();
@@ -46,6 +66,7 @@ async function bootstrap() {
     SwaggerModule.setup('api', app, document, {
         swaggerOptions: {
             persistAuthorization: true,
+            withCredentials: true,
         },
     });
 

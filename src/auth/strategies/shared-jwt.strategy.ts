@@ -35,10 +35,7 @@ export function createJwtStrategy(config: JwtStrategyConfig): Type<unknown> {
     class JwtStrategy extends PassportStrategy(Strategy, config.name) {
         constructor(public configService: ConfigService) {
             super({
-                jwtFromRequest: ExtractJwt.fromExtractors([
-                    extractCookie,
-                    ExtractJwt.fromAuthHeaderAsBearerToken(),
-                ]),
+                jwtFromRequest: ExtractJwt.fromExtractors([extractCookie]),
                 ignoreExpiration: false,
                 secretOrKey: configService.get('JWT_SECRET') as string,
             });
