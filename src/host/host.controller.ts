@@ -5,6 +5,8 @@ import {
     Body,
     Param,
     Patch,
+    Delete,
+    Query,
     UseGuards,
     Request,
 } from '@nestjs/common';
@@ -27,6 +29,14 @@ import { UpdateHostAvatarDto } from './dto/update-host-avatar.dto';
 import { AuthenticatedHost } from 'src/auth/types/authenticated-host.type';
 import { CreateSimulatorImageUploadDto } from 'src/simulator/dto/create-simulator-image-upload.dto';
 import { UpdateSimulatorDto } from 'src/host/dto/update-simulator.dto';
+import {
+    CreateScheduleTemplateDto,
+    BulkCreateScheduleTemplateDto,
+} from './dto/create-schedule-template.dto';
+import { UpdateScheduleTemplateDto } from './dto/update-schedule-template.dto';
+import { UpdateScheduleSlotDto } from './dto/update-schedule-slot.dto';
+import { CreateAdHocScheduleDto } from './dto/create-adhoc-schedule.dto';
+import { ScheduleSlotQueryDto } from './dto/schedule-slot-query.dto';
 
 @ApiTags('host')
 @ApiCookieAuth('access_token')
@@ -198,6 +208,164 @@ export class HostController {
         return this.hostService.confirmSimulatorImages(
             +simid,
             data,
+            req.user.id,
+        );
+    }
+
+    // ─── Schedule Template Endpoints ──────────────────────────────
+
+    @ApiOperation({ summary: 'Create a schedule template for a simulator' })
+    @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
+    @ApiBody({ type: CreateScheduleTemplateDto })
+    @Post('schedule-template/:simid')
+    createScheduleTemplate(
+        @Param('simid') simid: string,
+        @Body() dto: CreateScheduleTemplateDto,
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ): Promise<unknown> {
+        return this.hostService.createScheduleTemplate(
+            +simid,
+            req.user.id,
+            dto,
+        );
+    }
+
+    @ApiOperation({ summary: 'Bulk create schedule templates (multiple days)' })
+    @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
+    @ApiBody({ type: BulkCreateScheduleTemplateDto })
+    @Post('schedule-template/:simid/bulk')
+    bulkCreateScheduleTemplates(
+        @Param('simid') simid: string,
+        @Body() dto: BulkCreateScheduleTemplateDto,
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ): Promise<unknown> {
+        return this.hostService.bulkCreateScheduleTemplates(
+            +simid,
+            req.user.id,
+            dto,
+        );
+    }
+
+    @ApiOperation({ summary: 'Get all schedule templates for a simulator' })
+    @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
+    @Get('schedule-template/:simid')
+    getScheduleTemplates(
+        @Param('simid') simid: string,
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ): Promise<unknown> {
+        return this.hostService.getScheduleTemplates(+simid, req.user.id);
+    }
+
+    @ApiOperation({ summary: 'Update a schedule template' })
+    @ApiParam({
+        name: 'templateid',
+        description: 'Template ID',
+        type: 'number',
+    })
+    @ApiBody({ type: UpdateScheduleTemplateDto })
+    @Patch('schedule-template/:templateid')
+    updateScheduleTemplate(
+        @Param('templateid') templateid: string,
+        @Body() dto: UpdateScheduleTemplateDto,
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ): Promise<unknown> {
+        return this.hostService.updateScheduleTemplate(
+            +templateid,
+            req.user.id,
+            dto,
+        );
+    }
+
+    @ApiOperation({ summary: 'Delete (deactivate) a schedule template' })
+    @ApiParam({
+        name: 'templateid',
+        description: 'Template ID',
+        type: 'number',
+    })
+    @Delete('schedule-template/:templateid')
+    deleteScheduleTemplate(
+        @Param('templateid') templateid: string,
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ): Promise<unknown> {
+        return this.hostService.deleteScheduleTemplate(
+            +templateid,
+            req.user.id,
+        );
+    }
+
+    // ─── Schedule Slot Override Endpoints ─────────────────────────
+
+    @ApiOperation({
+        summary: 'Get materialized schedule slots for a simulator',
+    })
+    @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
+    @Get('schedule/:simid/slots')
+    getScheduleSlots(
+        @Param('simid') simid: string,
+        @Query() query: ScheduleSlotQueryDto,
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ): Promise<unknown> {
+        return this.hostService.getScheduleSlots(
+            +simid,
+            req.user.id,
+            query.startDate,
+            query.endDate,
+        );
+    }
+
+    @ApiOperation({
+        summary: 'Override a specific schedule slot (price/availability)',
+    })
+    @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
+    @ApiParam({
+        name: 'scheduleid',
+        description: 'Schedule slot ID',
+        type: 'number',
+    })
+    @ApiBody({ type: UpdateScheduleSlotDto })
+    @Patch('schedule/:simid/slot/:scheduleid')
+    updateScheduleSlot(
+        @Param('simid') simid: string,
+        @Param('scheduleid') scheduleid: string,
+        @Body() dto: UpdateScheduleSlotDto,
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ): Promise<unknown> {
+        return this.hostService.updateScheduleSlot(
+            +scheduleid,
+            +simid,
+            req.user.id,
+            dto,
+        );
+    }
+
+    @ApiOperation({ summary: 'Create an ad-hoc (one-off) schedule slot' })
+    @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
+    @ApiBody({ type: CreateAdHocScheduleDto })
+    @Post('schedule/:simid/slot')
+    createAdHocSlot(
+        @Param('simid') simid: string,
+        @Body() dto: CreateAdHocScheduleDto,
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ): Promise<unknown> {
+        return this.hostService.createAdHocSlot(+simid, req.user.id, dto);
+    }
+
+    @ApiOperation({ summary: 'Delete an unbooked schedule slot' })
+    @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
+    @ApiParam({
+        name: 'scheduleid',
+        description: 'Schedule slot ID',
+        type: 'number',
+    })
+    @Delete('schedule/:simid/slot/:scheduleid')
+    deleteScheduleSlot(
+        @Param('simid') simid: string,
+        @Param('scheduleid') scheduleid: string,
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ): Promise<unknown> {
+        return this.hostService.deleteScheduleSlot(
+            +scheduleid,
+            +simid,
             req.user.id,
         );
     }

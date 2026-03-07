@@ -17,6 +17,14 @@ import { CreateSimulatorDto } from './dto/create-simulator.dto';
 import { UpdateHostProfileDto } from './dto/update-host-profile.dto';
 import { ChangeHostPasswordDto } from './dto/change-host-password.dto';
 import { UpdateSimulatorDto } from 'src/host/dto/update-simulator.dto';
+import {
+    CreateScheduleTemplateDto,
+    BulkCreateScheduleTemplateDto,
+} from './dto/create-schedule-template.dto';
+import { UpdateScheduleTemplateDto } from './dto/update-schedule-template.dto';
+import { UpdateScheduleSlotDto } from './dto/update-schedule-slot.dto';
+import { CreateAdHocScheduleDto } from './dto/create-adhoc-schedule.dto';
+import { ScheduleJobService } from 'src/schedule-job/schedule-job.service';
 import * as argon2 from 'argon2';
 
 interface HostProfileResponse {
@@ -50,6 +58,7 @@ export class HostService {
         private readonly simulatorService: SimulatorService,
         private readonly configService: ConfigService,
         private readonly storageService: StorageService,
+        private readonly scheduleJobService: ScheduleJobService,
     ) {
         this.secret = this.getSecret();
     }
@@ -375,6 +384,396 @@ export class HostService {
             },
         });
         return host;
+    }
+
+    // ─── Schedule Template CRUD ─────────────────────────────────────
+
+    async createScheduleTemplate(
+        simId: number,
+        hostId: number,
+        dto: CreateScheduleTemplateDto,
+    ) {
+        await this.assertSimulatorOwnership(simId, hostId);
+        this.validateTimeRange(dto.startTime, dto.endTime);
+        await this.checkTemplateOverlap(
+            simId,
+            dto.dayOfWeek,
+            dto.startTime,
+            dto.endTime,
+        );
+
+        const template = await this.prisma.scheduleTemplate.create({
+            data: {
+                dayOfWeek: dto.dayOfWeek,
+                startTime: this.timeToDate(dto.startTime),
+                endTime: this.timeToDate(dto.endTime),
+                pricePerHour: dto.pricePerHour,
+                simId,
+            },
+        });
+
+        // Immediately materialize slots for the next 60 days
+        await this.scheduleJobService.materializeForTemplate(template.id);
+
+        return template;
+    }
+
+    async bulkCreateScheduleTemplates(
+        simId: number,
+        hostId: number,
+        dto: BulkCreateScheduleTemplateDto,
+    ) {
+        await this.assertSimulatorOwnership(simId, hostId);
+        this.validateTimeRange(dto.startTime, dto.endTime);
+
+        const uniqueDays = [...new Set(dto.daysOfWeek)];
+        for (const day of uniqueDays) {
+            await this.checkTemplateOverlap(
+                simId,
+                day,
+                dto.startTime,
+                dto.endTime,
+            );
+        }
+
+        const data = uniqueDays.map((day) => ({
+            dayOfWeek: day,
+            startTime: this.timeToDate(dto.startTime),
+            endTime: this.timeToDate(dto.endTime),
+            pricePerHour: dto.pricePerHour,
+            simId,
+        }));
+
+        await this.prisma.scheduleTemplate.createMany({
+            data,
+            skipDuplicates: true,
+        });
+
+        // Materialize slots for all newly created templates
+        const created = await this.prisma.scheduleTemplate.findMany({
+            where: {
+                simId,
+                isActive: true,
+                dayOfWeek: { in: uniqueDays },
+                startTime: this.timeToDate(dto.startTime),
+                endTime: this.timeToDate(dto.endTime),
+            },
+            select: { id: true },
+        });
+        for (const t of created) {
+            await this.scheduleJobService.materializeForTemplate(t.id);
+        }
+
+        return { message: `Created ${uniqueDays.length} schedule templates` };
+    }
+
+    async getScheduleTemplates(simId: number, hostId: number) {
+        await this.assertSimulatorOwnership(simId, hostId);
+        return this.prisma.scheduleTemplate.findMany({
+            where: { simId, isActive: true },
+            orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+        });
+    }
+
+    async updateScheduleTemplate(
+        templateId: number,
+        hostId: number,
+        dto: UpdateScheduleTemplateDto,
+    ) {
+        const template = await this.prisma.scheduleTemplate.findUnique({
+            where: { id: templateId },
+            include: { simulator: { select: { hostId: true, id: true } } },
+        });
+        if (!template) throw new NotFoundException('Template not found');
+        if (template.simulator.hostId !== hostId) {
+            throw new ForbiddenException('You do not own this simulator');
+        }
+
+        // Resolve final values for overlap check
+        const finalDay = dto.dayOfWeek ?? template.dayOfWeek;
+        const finalStart =
+            dto.startTime ?? this.dateToTimeStr(template.startTime);
+        const finalEnd = dto.endTime ?? this.dateToTimeStr(template.endTime);
+        this.validateTimeRange(finalStart, finalEnd);
+        await this.checkTemplateOverlap(
+            template.simId,
+            finalDay,
+            finalStart,
+            finalEnd,
+            templateId,
+        );
+
+        const updateData: Record<string, unknown> = {};
+        if (dto.dayOfWeek !== undefined) updateData.dayOfWeek = dto.dayOfWeek;
+        if (dto.startTime !== undefined)
+            updateData.startTime = this.timeToDate(dto.startTime);
+        if (dto.endTime !== undefined)
+            updateData.endTime = this.timeToDate(dto.endTime);
+        if (dto.pricePerHour !== undefined)
+            updateData.pricePerHour = dto.pricePerHour;
+
+        const updated = await this.prisma.scheduleTemplate.update({
+            where: { id: templateId },
+            data: updateData,
+        });
+
+        // Propagate price change to future unbooked slots from this template
+        if (dto.pricePerHour !== undefined) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            await this.prisma.simulatorSchedule.updateMany({
+                where: {
+                    templateId,
+                    available: true,
+                    date: { gt: today },
+                },
+                data: { price: dto.pricePerHour },
+            });
+        }
+
+        // If day/time changed, re-materialize to fill any new gaps
+        if (
+            dto.dayOfWeek !== undefined ||
+            dto.startTime !== undefined ||
+            dto.endTime !== undefined
+        ) {
+            await this.scheduleJobService.materializeForTemplate(templateId);
+        }
+
+        return updated;
+    }
+
+    async deleteScheduleTemplate(templateId: number, hostId: number) {
+        const template = await this.prisma.scheduleTemplate.findUnique({
+            where: { id: templateId },
+            include: { simulator: { select: { hostId: true } } },
+        });
+        if (!template) throw new NotFoundException('Template not found');
+        if (template.simulator.hostId !== hostId) {
+            throw new ForbiddenException('You do not own this simulator');
+        }
+
+        // Soft delete: deactivate template
+        await this.prisma.scheduleTemplate.update({
+            where: { id: templateId },
+            data: { isActive: false },
+        });
+
+        // Remove future unbooked materialized slots from this template
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const deleted = await this.prisma.simulatorSchedule.deleteMany({
+            where: {
+                templateId,
+                available: true,
+                date: { gt: today },
+            },
+        });
+
+        return {
+            message: 'Template deactivated',
+            slotsRemoved: deleted.count,
+        };
+    }
+
+    // ─── Schedule Slot Overrides ──────────────────────────────────────
+
+    async getScheduleSlots(
+        simId: number,
+        hostId: number,
+        startDate?: string,
+        endDate?: string,
+    ) {
+        await this.assertSimulatorOwnership(simId, hostId);
+
+        const where: Record<string, unknown> = { simId };
+        if (startDate || endDate) {
+            const dateFilter: Record<string, Date> = {};
+            if (startDate) dateFilter.gte = new Date(startDate);
+            if (endDate) dateFilter.lte = new Date(endDate);
+            where.date = dateFilter;
+        }
+
+        return this.prisma.simulatorSchedule.findMany({
+            where,
+            orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
+            include: {
+                bookingList: {
+                    include: {
+                        booking: {
+                            select: { id: true, statusId: true },
+                        },
+                    },
+                },
+            },
+        });
+    }
+
+    async updateScheduleSlot(
+        scheduleId: number,
+        simId: number,
+        hostId: number,
+        dto: UpdateScheduleSlotDto,
+    ) {
+        await this.assertSimulatorOwnership(simId, hostId);
+
+        const slot = await this.prisma.simulatorSchedule.findFirst({
+            where: { id: scheduleId, simId },
+            include: {
+                bookingList: {
+                    include: {
+                        booking: {
+                            select: { statusId: true },
+                        },
+                    },
+                },
+            },
+        });
+        if (!slot) throw new NotFoundException('Schedule slot not found');
+
+        // Check if slot has active bookings (statusId 1=pending or 2=confirmed)
+        const hasActiveBooking = slot.bookingList.some(
+            (bl) => bl.booking.statusId === 1 || bl.booking.statusId === 2,
+        );
+        if (hasActiveBooking && dto.available === true) {
+            throw new BadRequestException(
+                'Cannot mark slot as available — it has an active booking',
+            );
+        }
+
+        const updateData: Record<string, unknown> = {};
+        if (dto.price !== undefined) updateData.price = dto.price;
+        if (dto.available !== undefined) updateData.available = dto.available;
+
+        return this.prisma.simulatorSchedule.update({
+            where: { id: scheduleId },
+            data: updateData,
+        });
+    }
+
+    async createAdHocSlot(
+        simId: number,
+        hostId: number,
+        dto: CreateAdHocScheduleDto,
+    ) {
+        await this.assertSimulatorOwnership(simId, hostId);
+        this.validateTimeRange(dto.startTime, dto.endTime);
+
+        const slotDate = new Date(dto.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (slotDate < today) {
+            throw new BadRequestException('Cannot create slots in the past');
+        }
+
+        return this.prisma.simulatorSchedule.create({
+            data: {
+                date: slotDate,
+                startTime: this.timeToDate(dto.startTime),
+                endTime: this.timeToDate(dto.endTime),
+                price: dto.price,
+                simId,
+                templateId: null,
+            },
+        });
+    }
+
+    async deleteScheduleSlot(
+        scheduleId: number,
+        simId: number,
+        hostId: number,
+    ) {
+        await this.assertSimulatorOwnership(simId, hostId);
+
+        const slot = await this.prisma.simulatorSchedule.findFirst({
+            where: { id: scheduleId, simId },
+            include: { bookingList: true },
+        });
+        if (!slot) throw new NotFoundException('Schedule slot not found');
+        if (slot.bookingList.length > 0) {
+            throw new BadRequestException(
+                'Cannot delete a slot that is linked to a booking',
+            );
+        }
+
+        await this.prisma.simulatorSchedule.delete({
+            where: { id: scheduleId },
+        });
+        return { message: 'Slot deleted' };
+    }
+
+    // ─── Private Helpers ──────────────────────────────────────────────
+
+    private async assertSimulatorOwnership(simId: number, hostId: number) {
+        const sim = await this.prisma.simulator.findUnique({
+            where: { id: simId },
+            select: { hostId: true },
+        });
+        if (!sim) throw new NotFoundException('Simulator not found');
+        if (sim.hostId !== hostId) {
+            throw new ForbiddenException('You do not own this simulator');
+        }
+    }
+
+    private validateTimeRange(startTime: string, endTime: string) {
+        const [sh, sm] = startTime.split(':').map(Number);
+        const [eh, em] = endTime.split(':').map(Number);
+        const startMinutes = sh * 60 + sm;
+        const endMinutes = eh * 60 + em;
+        if (endMinutes <= startMinutes) {
+            throw new BadRequestException('endTime must be after startTime');
+        }
+    }
+
+    private async checkTemplateOverlap(
+        simId: number,
+        dayOfWeek: number,
+        startTime: string,
+        endTime: string,
+        excludeTemplateId?: number,
+    ) {
+        const existingTemplates = await this.prisma.scheduleTemplate.findMany({
+            where: {
+                simId,
+                dayOfWeek,
+                isActive: true,
+                ...(excludeTemplateId
+                    ? { id: { not: excludeTemplateId } }
+                    : {}),
+            },
+        });
+
+        const newStart = this.timeToMinutes(startTime);
+        const newEnd = this.timeToMinutes(endTime);
+
+        for (const t of existingTemplates) {
+            const tStart = this.dateTimeToMinutes(t.startTime);
+            const tEnd = this.dateTimeToMinutes(t.endTime);
+            if (newStart < tEnd && newEnd > tStart) {
+                throw new ConflictException(
+                    `Template overlaps with existing template (ID: ${t.id}) on this day`,
+                );
+            }
+        }
+    }
+
+    /** Convert "HH:mm" string to a Date with time set (date part is 1970-01-01, as Prisma Time needs) */
+    private timeToDate(time: string): Date {
+        return new Date(`1970-01-01T${time}:00.000Z`);
+    }
+
+    /** Convert Date (Time column) back to "HH:mm" string */
+    private dateToTimeStr(d: Date): string {
+        return d.toISOString().slice(11, 16);
+    }
+
+    private timeToMinutes(time: string): number {
+        const [h, m] = time.split(':').map(Number);
+        return h * 60 + m;
+    }
+
+    private dateTimeToMinutes(d: Date): number {
+        return d.getUTCHours() * 60 + d.getUTCMinutes();
     }
 
     private getSecret(): Buffer {

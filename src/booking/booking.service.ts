@@ -154,6 +154,23 @@ export class BookingService {
             where: { id: bookingId, customerId: customerID, statusId: 1 },
             data: { statusId: 3 },
         });
+
+        // Release linked schedule slots back to available
+        if (result.count > 0) {
+            const bookingListItems = await this.prisma.bookingList.findMany({
+                where: { bookingId },
+                select: { scheduleId: true },
+            });
+
+            const scheduleIds = bookingListItems.map((item) => item.scheduleId);
+            if (scheduleIds.length > 0) {
+                await this.prisma.simulatorSchedule.updateMany({
+                    where: { id: { in: scheduleIds } },
+                    data: { available: true },
+                });
+            }
+        }
+
         return result;
     }
 }

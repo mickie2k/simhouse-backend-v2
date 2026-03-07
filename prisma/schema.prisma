@@ -127,22 +127,43 @@ model Simulator {
   host            Host                @relation(fields: [hostId], references: [id])
   mod             SimulatorMod        @relation(fields: [modId], references: [id])
   schedules       SimulatorSchedule[]
+  scheduleTemplates ScheduleTemplate[]
   typeList        SimulatorTypeList[]
 
   @@map("simulatorlist")
 }
 
-model SimulatorSchedule {
-  id          Int           @id @default(autoincrement()) @map("ScheduleID")
-  price       Decimal       @map("Price") @db.Decimal(10, 2)
-  date        DateTime      @map("Date") @db.Date
-  startTime   DateTime      @map("StartTime") @db.Time(0)
-  endTime     DateTime      @map("EndTime") @db.Time(0)
-  available   Boolean       @default(true) @map("Available")
-  simId       Int           @map("SimID")
-  bookingList BookingList[]
-  simulator   Simulator     @relation(fields: [simId], references: [id])
+model ScheduleTemplate {
+  id           Int                 @id @default(autoincrement()) @map("TemplateID")
+  dayOfWeek    Int                 @map("DayOfWeek") @db.SmallInt
+  startTime    DateTime            @map("StartTime") @db.Time(0)
+  endTime      DateTime            @map("EndTime") @db.Time(0)
+  pricePerHour Decimal             @map("PricePerHour") @db.Decimal(10, 2)
+  isActive     Boolean             @default(true) @map("IsActive")
+  simId        Int                 @map("SimID")
+  simulator    Simulator           @relation(fields: [simId], references: [id])
+  schedules    SimulatorSchedule[]
 
+  @@unique([simId, dayOfWeek, startTime, endTime])
+  @@map("scheduletemplate")
+}
+
+model SimulatorSchedule {
+  id          Int                @id @default(autoincrement()) @map("ScheduleID")
+  price       Decimal            @map("Price") @db.Decimal(10, 2)
+  date        DateTime           @map("Date") @db.Date
+  startTime   DateTime           @map("StartTime") @db.Time(0)
+  endTime     DateTime           @map("EndTime") @db.Time(0)
+  available   Boolean            @default(true) @map("Available")
+  simId       Int                @map("SimID")
+  templateId  Int?               @map("TemplateID")
+  bookingList BookingList[]
+  simulator   Simulator          @relation(fields: [simId], references: [id])
+  template    ScheduleTemplate?  @relation(fields: [templateId], references: [id])
+
+  @@unique([simId, date, startTime])
+  @@index([simId, date, available])
+  @@index([date, available, startTime])
   @@map("simulatorschedule")
 }
 

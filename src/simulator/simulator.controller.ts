@@ -159,6 +159,29 @@ export class SimulatorController {
         return this.simulatorService.findNearestLocation(query);
     }
 
+    @ApiOperation({ summary: 'Get available schedule slots for a simulator' })
+    @ApiParam({ name: 'id', description: 'Simulator ID', type: 'number' })
+    @ApiQuery({
+        name: 'startDate',
+        required: false,
+        description: 'Start date (YYYY-MM-DD)',
+    })
+    @ApiQuery({
+        name: 'endDate',
+        required: false,
+        description: 'End date (YYYY-MM-DD)',
+    })
+    @ApiResponse({ status: 200, description: 'Available slots returned.' })
+    @ApiResponse({ status: 404, description: 'Simulator not found.' })
+    @Get(':id/schedule')
+    getAvailableSlots(
+        @Param('id') id: string,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+    ) {
+        return this.simulatorService.getAvailableSlots(+id, startDate, endDate);
+    }
+
     @ApiOperation({ summary: 'Get a simulator by ID' })
     @ApiParam({ name: 'id', description: 'Simulator ID', type: 'number' })
     @ApiResponse({ status: 200, description: 'Simulator found.' })

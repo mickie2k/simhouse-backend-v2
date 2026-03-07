@@ -428,4 +428,49 @@ export class SimulatorService {
         if (!objectKey) return undefined;
         return this.storageService.getPublicUrl(objectKey);
     }
+
+    /**
+     * Get available schedule slots for a simulator.
+     * Used by customers to browse bookable time slots.
+     */
+    async getAvailableSlots(
+        simId: number,
+        startDate?: string,
+        endDate?: string,
+    ) {
+        // Verify simulator exists
+        const simulator = await this.prisma.simulator.findUnique({
+            where: { id: simId },
+            select: { id: true },
+        });
+        if (!simulator) {
+            throw new NotFoundException('Simulator not found');
+        }
+
+        const today = new Date();
+        today.setUTCHours(0, 0, 0, 0);
+
+        const dateFilter: { gte: Date; lte?: Date } = {
+            gte: startDate ? new Date(startDate) : today,
+        };
+        if (endDate) {
+            dateFilter.lte = new Date(endDate);
+        }
+
+        return this.prisma.simulatorSchedule.findMany({
+            where: {
+                simId,
+                available: true,
+                date: dateFilter,
+            },
+            select: {
+                id: true,
+                date: true,
+                startTime: true,
+                endTime: true,
+                price: true,
+            },
+            orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
+        });
+    }
 }
