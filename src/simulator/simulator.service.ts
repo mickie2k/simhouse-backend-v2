@@ -210,7 +210,7 @@ export class SimulatorService {
         // Build SQL fragments for optional filters
         const typeJoin =
             simTypeIds && simTypeIds.length > 0
-                ? Prisma.sql`JOIN simulatortypelist stl ON sl."SimID" = stl."SimID"`
+                ? Prisma.sql`LEFT JOIN simulatortypelist stl ON sl."SimID" = stl."SimID"`
                 : Prisma.sql``;
 
         const conditions: Prisma.Sql[] = [];
@@ -248,6 +248,10 @@ export class SimulatorService {
             ORDER BY distance_km ASC
             LIMIT ${limit}
         `;
+
+        this.logger.log(
+            `Found ${rawResults.length} simulators within ${radiusKm} km of (${lat}, ${lng})`,
+        );
 
         if (rawResults.length === 0) return [];
 
