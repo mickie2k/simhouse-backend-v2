@@ -421,13 +421,6 @@ export class ConfigService {
 - [ ] Performance considerations (caching, database optimization)
 - [ ] Comprehensive testing coverage
 
-## Git Workflow
-
-- Create feature branches: `feature/short-description`.
-- Fix branches: `fix/short-description`.
-- Commit messages should be clear and concise.
-- **Pull Requests:** When a task is complete, verify all tests pass and then create a Pull Request (PR) to merge changes into the main branch. Use the `gh` tool if available.
-
 ## Conclusion
 
 NestJS provides a powerful, opinionated framework for building scalable Node.js applications. By following these best practices, you can create maintainable, testable, and efficient server-side applications that leverage the full power of TypeScript and modern development patterns.
