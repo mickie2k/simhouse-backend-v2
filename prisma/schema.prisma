@@ -38,6 +38,39 @@ model Host {
   @@map("host")
 }
 
+model Country {
+  id        Int        @id @map("CountryID")
+  name      String     @unique @map("CountryName") @db.VarChar(100)
+  code      String     @unique @map("CountryCode") @db.VarChar(2)
+  provinces Province[]
+  cities    City[]
+
+  @@map("country")
+}
+
+model Province {
+  id        Int      @id @map("ProvinceID")
+  name      String   @map("ProvinceName") @db.VarChar(100)
+  code      String?  @map("ProvinceCode") @db.VarChar(10)
+  countryId Int      @map("CountryID")
+  country   Country  @relation(fields: [countryId], references: [id])
+  cities    City[]
+
+  @@map("province")
+}
+
+model City {
+  id         Int        @id @map("CityID")
+  name       String     @map("CityName") @db.VarChar(100)
+  provinceId Int?       @map("ProvinceID")
+  countryId  Int        @map("CountryID")
+  province   Province?  @relation(fields: [provinceId], references: [id])
+  country    Country    @relation(fields: [countryId], references: [id])
+  simulators Simulator[]
+
+  @@map("city")
+}
+
 model SimulatorType {
   id       Int                 @id @default(autoincrement()) @map("SimTypeID")
   typeName String              @map("SimTypeName") @db.VarChar(32)
@@ -81,6 +114,7 @@ model Simulator {
   pricePerHour    Decimal             @map("PricePerHour") @db.Decimal(10, 2)
   listDescription String?             @map("ListDescription")
   addressDetail   String              @map("AddressDetail")
+  cityId          Int                 @map("CityID")
   latitude        Decimal             @map("Lat") @db.Decimal(10, 8)
   longitude       Decimal             @map("Long") @db.Decimal(11, 8)
   firstImage      String              @default("noimage.jpg") @map("firstimage") @db.VarChar(255)
@@ -89,6 +123,7 @@ model Simulator {
   hostId          Int                 @map("HostID")
   modId           Int                 @map("ModID")
   bookings        Booking[]
+  city            City                @relation(fields: [cityId], references: [id])
   host            Host                @relation(fields: [hostId], references: [id])
   mod             SimulatorMod        @relation(fields: [modId], references: [id])
   schedules       SimulatorSchedule[]
@@ -143,3 +178,4 @@ model BookingList {
   @@id([bookingId, scheduleId])
   @@map("bookinglist")
 }
+

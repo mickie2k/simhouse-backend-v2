@@ -48,6 +48,14 @@ export class SimulatorController {
         example: 10,
     })
     @ApiQuery({
+        name: 'search',
+        type: String,
+        required: false,
+        description:
+            'Case-insensitive text search across simulator name, description, and address',
+        example: 'racing cockpit',
+    })
+    @ApiQuery({
         name: 'minPrice',
         type: Number,
         required: false,
@@ -92,11 +100,60 @@ export class SimulatorController {
     }
 
     @ApiOperation({ summary: 'Find nearest simulators within radius (km)' })
-    @ApiQuery({ name: 'lat', type: Number, required: true })
-    @ApiQuery({ name: 'lng', type: Number, required: true })
-    @ApiQuery({ name: 'radiusKm', type: Number, required: true })
-    @ApiQuery({ name: 'limit', type: Number, required: false })
-    @ApiResponse({ status: 200, description: 'Nearest simulators retrieved.' })
+    @ApiQuery({
+        name: 'lat',
+        type: Number,
+        required: true,
+        description: 'Latitude of the search origin',
+        example: 13.7563,
+    })
+    @ApiQuery({
+        name: 'lng',
+        type: Number,
+        required: true,
+        description: 'Longitude of the search origin',
+        example: 100.5018,
+    })
+    @ApiQuery({
+        name: 'radiusKm',
+        type: Number,
+        required: true,
+        description: 'Search radius in kilometers',
+        example: 10,
+    })
+    @ApiQuery({
+        name: 'limit',
+        type: Number,
+        required: false,
+        description: 'Max results to return (1-100, default: 20)',
+        example: 20,
+    })
+    @ApiQuery({
+        name: 'minPrice',
+        type: Number,
+        required: false,
+        description: 'Minimum price per hour filter',
+        example: 100,
+    })
+    @ApiQuery({
+        name: 'maxPrice',
+        type: Number,
+        required: false,
+        description: 'Maximum price per hour filter',
+        example: 500,
+    })
+    @ApiQuery({
+        name: 'simTypeIds',
+        type: String,
+        required: false,
+        description:
+            'Filter by simulator type IDs (comma-separated, e.g. 1,2,3)',
+        example: '1,2',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Nearest simulators retrieved, ordered by distance.',
+    })
     @Get('nearest')
     findNearestLocation(@Query() query: FindNearestSimulatorsDto) {
         return this.simulatorService.findNearestLocation(query);

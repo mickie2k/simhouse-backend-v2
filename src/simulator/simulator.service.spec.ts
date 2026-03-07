@@ -3,6 +3,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SimulatorService } from './simulator.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import {
     SimulatorQueryDto,
     SimulatorSortBy,
@@ -14,6 +15,7 @@ jest.mock('../prisma/prisma.service');
 const mockFindMany = jest.fn();
 const mockCount = jest.fn();
 const mockTransaction = jest.fn();
+const mockGetPublicUrl = jest.fn((value?: string) => value);
 
 const mockPrismaFactory = () => ({
     simulator: {
@@ -21,6 +23,10 @@ const mockPrismaFactory = () => ({
         count: mockCount,
     },
     $transaction: mockTransaction,
+});
+
+const mockStorageFactory = () => ({
+    getPublicUrl: mockGetPublicUrl,
 });
 
 describe('SimulatorService', () => {
@@ -66,6 +72,10 @@ describe('SimulatorService', () => {
                 {
                     provide: PrismaService,
                     useFactory: mockPrismaFactory,
+                },
+                {
+                    provide: StorageService,
+                    useFactory: mockStorageFactory,
                 },
             ],
         }).compile();
@@ -194,6 +204,55 @@ describe('SimulatorService', () => {
                 );
             });
 
+            it('should apply case-insensitive contains search across text fields', async () => {
+                await service.findAll({ search: 'cockpit' });
+
+                expect(mockFindMany).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        where: expect.objectContaining({
+                            OR: [
+                                {
+                                    simListName: {
+                                        contains: 'cockpit',
+                                        mode: 'insensitive',
+                                    },
+                                },
+                                {
+                                    listDescription: {
+                                        contains: 'cockpit',
+                                        mode: 'insensitive',
+                                    },
+                                },
+                                {
+                                    addressDetail: {
+                                        contains: 'cockpit',
+                                        mode: 'insensitive',
+                                    },
+                                },
+                                {
+                                    mod: {
+                                        modelName: {
+                                            contains: 'cockpit',
+                                            mode: 'insensitive',
+                                        },
+                                    },
+                                },
+                                {
+                                    mod: {
+                                        brand: {
+                                            brandName: {
+                                                contains: 'cockpit',
+                                                mode: 'insensitive',
+                                            },
+                                        },
+                                    },
+                                },
+                            ],
+                        }),
+                    }),
+                );
+            });
+
             it('should not add typeList filter when simTypeIds is empty array', async () => {
                 await service.findAll({ simTypeIds: [] });
 
@@ -233,6 +292,7 @@ describe('SimulatorService', () => {
                 await service.findAll({
                     page: 2,
                     limit: 5,
+                    search: 'bangkok',
                     minPrice: 100,
                     maxPrice: 400,
                     simTypeIds: [2],
@@ -245,6 +305,44 @@ describe('SimulatorService', () => {
                         skip: 5,
                         take: 5,
                         where: {
+                            OR: [
+                                {
+                                    simListName: {
+                                        contains: 'bangkok',
+                                        mode: 'insensitive',
+                                    },
+                                },
+                                {
+                                    listDescription: {
+                                        contains: 'bangkok',
+                                        mode: 'insensitive',
+                                    },
+                                },
+                                {
+                                    addressDetail: {
+                                        contains: 'bangkok',
+                                        mode: 'insensitive',
+                                    },
+                                },
+                                {
+                                    mod: {
+                                        modelName: {
+                                            contains: 'bangkok',
+                                            mode: 'insensitive',
+                                        },
+                                    },
+                                },
+                                {
+                                    mod: {
+                                        brand: {
+                                            brandName: {
+                                                contains: 'bangkok',
+                                                mode: 'insensitive',
+                                            },
+                                        },
+                                    },
+                                },
+                            ],
                             pricePerHour: { gte: 100, lte: 400 },
                             typeList: { some: { simTypeId: { in: [2] } } },
                         },

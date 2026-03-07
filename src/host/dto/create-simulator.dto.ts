@@ -66,4 +66,12 @@ export class CreateSimulatorDto {
     @IsNotEmpty()
     @IsNumber()
     longitude: number;
+
+    @ApiProperty({
+        description: 'City ID from the cities list',
+        example: 1,
+    })
+    @IsNotEmpty()
+    @IsNumber()
+    cityId: number;
 }

@@ -6,6 +6,7 @@ import {
     IsInt,
     IsNumber,
     IsOptional,
+    IsString,
     Min,
 } from 'class-validator';
 import { PaginationDto } from '../../common/dto/pagination.dto';
@@ -22,6 +23,16 @@ export enum SortOrder {
 }
 
 export class SimulatorQueryDto extends PaginationDto {
+    @ApiPropertyOptional({
+        description:
+            'Case-insensitive text search across simulator name, description, and address',
+        example: 'racing cockpit',
+    })
+    @IsOptional()
+    @Transform(({ value }: { value: string }) => value?.trim())
+    @IsString()
+    search?: string;
+
     @ApiPropertyOptional({
         description: 'Minimum price per hour filter',
         minimum: 0,

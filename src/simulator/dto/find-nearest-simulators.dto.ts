@@ -1,6 +1,7 @@
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+    IsArray,
     IsInt,
     IsNotEmpty,
     IsNumber,
@@ -60,4 +61,43 @@ export class FindNearestSimulatorsDto {
     @Min(1)
     @Max(100)
     limit?: number;
+
+    @ApiPropertyOptional({
+        description: 'Minimum price per hour filter',
+        minimum: 0,
+        example: 100,
+    })
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber()
+    @Min(0)
+    minPrice?: number;
+
+    @ApiPropertyOptional({
+        description: 'Maximum price per hour filter',
+        minimum: 0,
+        example: 500,
+    })
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber()
+    @Min(0)
+    maxPrice?: number;
+
+    @ApiPropertyOptional({
+        description:
+            'Filter by simulator type IDs (comma-separated, e.g. 1,2,3)',
+        example: '1,2',
+        type: String,
+    })
+    @IsOptional()
+    @Transform(({ value }: { value: string }) =>
+        String(value)
+            .split(',')
+            .map((v) => parseInt(v.trim(), 10))
+            .filter((n) => !isNaN(n)),
+    )
+    @IsArray()
+    @IsInt({ each: true })
+    simTypeIds?: number[];
 }

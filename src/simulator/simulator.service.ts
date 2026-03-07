@@ -5,6 +5,7 @@ import {
     Logger,
     NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from 'src/generated/prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { StorageService } from 'src/storage/storage.service';
 import { CreateSimulatorDto } from '../host/dto/create-simulator.dto';
@@ -49,6 +50,7 @@ export class SimulatorService {
                     addressDetail: createSimulatorDto.addressdetail,
                     latitude: createSimulatorDto.latitude,
                     longitude: createSimulatorDto.longitude,
+                    cityId: createSimulatorDto.cityId,
                 },
                 select: {
                     id: true,
@@ -74,6 +76,70 @@ export class SimulatorService {
         }
     }
 
+    private buildWhereClause(filters: {
+        search?: string;
+        minPrice?: number;
+        maxPrice?: number;
+        simTypeIds?: number[];
+    }): Prisma.SimulatorWhereInput {
+        const priceFilter: { gte?: number; lte?: number } = {};
+        const search = filters.search?.trim();
+
+        if (filters.minPrice !== undefined) priceFilter.gte = filters.minPrice;
+        if (filters.maxPrice !== undefined) priceFilter.lte = filters.maxPrice;
+        const hasPriceFilter = Object.keys(priceFilter).length > 0;
+
+        return {
+            ...(search && {
+                OR: [
+                    {
+                        simListName: {
+                            contains: search,
+                            mode: 'insensitive',
+                        },
+                    },
+                    {
+                        listDescription: {
+                            contains: search,
+                            mode: 'insensitive',
+                        },
+                    },
+                    {
+                        addressDetail: {
+                            contains: search,
+                            mode: 'insensitive',
+                        },
+                    },
+                    {
+                        mod: {
+                            modelName: {
+                                contains: search,
+                                mode: 'insensitive',
+                            },
+                        },
+                    },
+                    {
+                        mod: {
+                            brand: {
+                                brandName: {
+                                    contains: search,
+                                    mode: 'insensitive',
+                                },
+                            },
+                        },
+                    },
+                ],
+            }),
+            ...(hasPriceFilter && { pricePerHour: priceFilter }),
+            ...(filters.simTypeIds &&
+                filters.simTypeIds.length > 0 && {
+                    typeList: {
+                        some: { simTypeId: { in: filters.simTypeIds } },
+                    },
+                }),
+        };
+    }
+
     async findAll(
         query: SimulatorQueryDto,
     ): Promise<PaginatedResponseDto<object>> {
@@ -83,26 +149,7 @@ export class SimulatorService {
         const sortBy = query.sortBy ?? SimulatorSortBy.ID;
         const sortOrder = query.sortOrder ?? SortOrder.ASC;
 
-        // Build price filter
-        const priceFilter: { gte?: number; lte?: number } = {};
-        if (query.minPrice !== undefined) priceFilter.gte = query.minPrice;
-        if (query.maxPrice !== undefined) priceFilter.lte = query.maxPrice;
-        const hasPriceFilter = Object.keys(priceFilter).length > 0;
-
-        // Build WHERE clause
-        const where = {
-            ...(hasPriceFilter && {
-                pricePerHour: priceFilter,
-            }),
-            ...(query.simTypeIds &&
-                query.simTypeIds.length > 0 && {
-                    typeList: {
-                        some: {
-                            simTypeId: { in: query.simTypeIds },
-                        },
-                    },
-                }),
-        };
+        const where = this.buildWhereClause(query);
 
         const [simulators, total] = await this.prisma.$transaction([
             this.prisma.simulator.findMany({
@@ -132,9 +179,82 @@ export class SimulatorService {
         return simulator;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    findNearestLocation(query: FindNearestSimulatorsDto) {
-        return null;
+    async findNearestLocation(query: FindNearestSimulatorsDto) {
+        const {
+            lat,
+            lng,
+            radiusKm,
+            limit = 20,
+            minPrice,
+            maxPrice,
+            simTypeIds,
+        } = query;
+
+        // Build SQL fragments for optional filters
+        const typeJoin =
+            simTypeIds && simTypeIds.length > 0
+                ? Prisma.sql`JOIN simulatortypelist stl ON sl."SimID" = stl."SimID"`
+                : Prisma.sql``;
+
+        const conditions: Prisma.Sql[] = [];
+        if (minPrice !== undefined)
+            conditions.push(Prisma.sql`sl."PricePerHour" >= ${minPrice}`);
+        if (maxPrice !== undefined)
+            conditions.push(Prisma.sql`sl."PricePerHour" <= ${maxPrice}`);
+        if (simTypeIds && simTypeIds.length > 0)
+            conditions.push(
+                Prisma.sql`stl."SimTypeID" IN (${Prisma.join(simTypeIds)})`,
+            );
+
+        const whereClause =
+            conditions.length > 0
+                ? Prisma.sql`WHERE ${Prisma.join(conditions, ' AND ')}`
+                : Prisma.sql``;
+
+        type RawResult = { SimID: number; distance_km: number };
+
+        const rawResults = await this.prisma.$queryRaw<RawResult[]>`
+            WITH distances AS (
+                SELECT DISTINCT sl."SimID",
+                    (6371 * acos(LEAST(1.0,
+                        cos(radians(${lat})) * cos(radians(CAST(sl."Lat" AS float))) *
+                        cos(radians(CAST(sl."Long" AS float)) - radians(${lng})) +
+                        sin(radians(${lat})) * sin(radians(CAST(sl."Lat" AS float)))
+                    ))) AS distance_km
+                FROM simulatorlist sl
+                ${typeJoin}
+                ${whereClause}
+            )
+            SELECT "SimID", distance_km
+            FROM distances
+            WHERE distance_km <= ${radiusKm}
+            ORDER BY distance_km ASC
+            LIMIT ${limit}
+        `;
+
+        if (rawResults.length === 0) return [];
+
+        const distanceMap = new Map<number, number>(
+            rawResults.map((r) => [Number(r.SimID), Number(r.distance_km)]),
+        );
+
+        const simulators = await this.prisma.simulator.findMany({
+            where: { id: { in: [...distanceMap.keys()] } },
+            include: {
+                mod: { include: { brand: true } },
+                typeList: { include: { simType: true } },
+            },
+        });
+
+        return simulators
+            .map((s) => ({
+                ...s,
+                firstImage: this.resolveImageUrl(s.firstImage),
+                secondImage: this.resolveImageUrl(s.secondImage),
+                thirdImage: this.resolveImageUrl(s.thirdImage),
+                distanceKm: distanceMap.get(s.id),
+            }))
+            .sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
     }
 
     async update(
