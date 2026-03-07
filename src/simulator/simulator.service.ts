@@ -2,6 +2,7 @@ import {
     BadRequestException,
     ForbiddenException,
     Injectable,
+    InternalServerErrorException,
     Logger,
     NotFoundException,
 } from '@nestjs/common';
@@ -31,48 +32,53 @@ export class SimulatorService {
     ) {}
 
     async create(createSimulatorDto: CreateSimulatorDto, hostId: number) {
-        const file1 = 'noimage.jpg';
-        const file2 = 'noimage.jpg';
-        const file3 = 'noimage.jpg';
-
         try {
-            // Create simulator with images
-            const simulator = await this.prisma.simulator.create({
-                data: {
-                    simListName: createSimulatorDto.simlistname,
-                    listDescription: createSimulatorDto.listdescription,
-                    pricePerHour: createSimulatorDto.priceperhour,
-                    modId: createSimulatorDto.modid,
-                    hostId,
-                    firstImage: file1,
-                    secondImage: file2,
-                    thirdImage: file3,
-                    addressDetail: createSimulatorDto.addressdetail,
-                    latitude: createSimulatorDto.latitude,
-                    longitude: createSimulatorDto.longitude,
-                    cityId: createSimulatorDto.cityId,
-                },
-                select: {
-                    id: true,
-                },
+            const newSimulator = await this.prisma.$transaction(async (tx) => {
+                // Create simulator with images
+                const simulator = await tx.simulator.create({
+                    data: {
+                        simListName: createSimulatorDto.simlistname,
+                        listDescription: createSimulatorDto.listdescription,
+                        pricePerHour: createSimulatorDto.priceperhour,
+                        modId: createSimulatorDto.modid,
+                        hostId,
+                        addressDetail: createSimulatorDto.addressdetail,
+                        latitude: createSimulatorDto.latitude,
+                        longitude: createSimulatorDto.longitude,
+                        cityId: createSimulatorDto.cityId,
+                    },
+                    select: {
+                        id: true,
+                    },
+                });
+
+                const simTypeLinks = createSimulatorDto.simtypeid.map(
+                    (typeId) => ({
+                        simId: simulator.id,
+                        simTypeId: typeId,
+                    }),
+                );
+
+                await tx.simulatorTypeList.createMany({
+                    data: simTypeLinks,
+                });
+
+                return simulator;
             });
 
-            const simTypeLinks = createSimulatorDto.simtypeid.map((typeId) => ({
-                simId: simulator.id,
-                simTypeId: typeId,
-            }));
+            this.logger.log(
+                `Created simulator with ID ${newSimulator.id} for host ${hostId}`,
+            );
 
-            await this.prisma.simulatorTypeList.createMany({
-                data: simTypeLinks,
-            });
-
-            return { message: 'Upload Success', simid: simulator.id };
+            return { message: 'Upload Success', simid: newSimulator.id };
         } catch (error) {
             this.logger.error(
                 `Failed to upload simulator for host ${hostId}`,
                 error instanceof Error ? error.stack : undefined,
             );
-            throw new BadRequestException('Failed to upload simulator');
+            throw new InternalServerErrorException(
+                'Failed to upload simulator',
+            );
         }
     }
 
@@ -81,6 +87,9 @@ export class SimulatorService {
         minPrice?: number;
         maxPrice?: number;
         simTypeIds?: number[];
+        cityId?: number;
+        provinceId?: number;
+        countryId?: number;
     }): Prisma.SimulatorWhereInput {
         const priceFilter: { gte?: number; lte?: number } = {};
         const search = filters.search?.trim();
@@ -137,6 +146,14 @@ export class SimulatorService {
                         some: { simTypeId: { in: filters.simTypeIds } },
                     },
                 }),
+            // Location filters are hierarchical — apply only the most specific one
+            ...(filters.cityId !== undefined
+                ? { cityId: filters.cityId }
+                : filters.provinceId !== undefined
+                  ? { city: { provinceId: filters.provinceId } }
+                  : filters.countryId !== undefined
+                    ? { city: { countryId: filters.countryId } }
+                    : {}),
         };
     }
 

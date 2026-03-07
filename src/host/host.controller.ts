@@ -40,11 +40,6 @@ export class HostController {
     constructor(private readonly hostService: HostService) {}
 
     @ApiOperation({ summary: 'Get current host profile' })
-    @ApiResponse({
-        status: 200,
-        description: 'Profile retrieved successfully.',
-    })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
     @Get('profile')
     getProfile(
         @Request() req: ExpressRequest & { user: AuthenticatedHost },
@@ -53,9 +48,6 @@ export class HostController {
     }
 
     @ApiOperation({ summary: 'Update current host profile' })
-    @ApiResponse({ status: 200, description: 'Profile updated successfully.' })
-    @ApiResponse({ status: 400, description: 'Invalid profile data.' })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
     @Patch('profile')
     updateProfile(
         @Body() data: UpdateHostProfileDto,
@@ -65,9 +57,6 @@ export class HostController {
     }
 
     @ApiOperation({ summary: 'Change current host password' })
-    @ApiResponse({ status: 200, description: 'Password updated successfully.' })
-    @ApiResponse({ status: 400, description: 'Invalid password data.' })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
     @Patch('profile/password')
     changePassword(
         @Body() data: ChangeHostPasswordDto,
@@ -78,12 +67,6 @@ export class HostController {
 
     @ApiOperation({ summary: 'Create avatar upload URL' })
     @ApiBody({ type: CreateHostAvatarUploadDto })
-    @ApiResponse({
-        status: 200,
-        description: 'Upload URL created successfully.',
-    })
-    @ApiResponse({ status: 400, description: 'Invalid content type.' })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
     @Post('profile/avatar-upload')
     createAvatarUpload(
         @Body() data: CreateHostAvatarUploadDto,
@@ -97,9 +80,6 @@ export class HostController {
 
     @ApiOperation({ summary: 'Update host avatar URL' })
     @ApiBody({ type: UpdateHostAvatarDto })
-    @ApiResponse({ status: 200, description: 'Avatar updated successfully.' })
-    @ApiResponse({ status: 400, description: 'Invalid object key.' })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
     @Patch('profile/avatar')
     updateAvatar(
         @Body() data: UpdateHostAvatarDto,
@@ -110,15 +90,6 @@ export class HostController {
 
     @ApiOperation({ summary: 'Get all bookings for a specific simulator' })
     @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
-    @ApiResponse({
-        status: 200,
-        description: 'Bookings retrieved successfully.',
-    })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
-    @ApiResponse({
-        status: 403,
-        description: 'Forbidden - Not the owner of this simulator.',
-    })
     @Get('booking/:simid')
     async bookingFromSimID(
         @Param('simid') simid: string,
@@ -130,12 +101,6 @@ export class HostController {
     @ApiOperation({ summary: 'Get schedule details for a specific booking' })
     @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
     @ApiParam({ name: 'bookingid', description: 'Booking ID', type: 'number' })
-    @ApiResponse({
-        status: 200,
-        description: 'Schedule retrieved successfully.',
-    })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
-    @ApiResponse({ status: 403, description: 'Forbidden.' })
     @Get('booking/:simid/:bookingid/schedule')
     async scheduleFromBookingID(
         @Param('simid') simid: string,
@@ -151,12 +116,6 @@ export class HostController {
 
     @ApiOperation({ summary: 'Get all schedules for a specific simulator' })
     @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
-    @ApiResponse({
-        status: 200,
-        description: 'Schedules retrieved successfully.',
-    })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
-    @ApiResponse({ status: 403, description: 'Forbidden.' })
     @Get('schedule/:simid')
     async scheduleFromSimID(
         @Param('simid') simid: string,
@@ -168,12 +127,6 @@ export class HostController {
     @ApiOperation({ summary: 'Confirm a booking' })
     @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
     @ApiParam({ name: 'bookingid', description: 'Booking ID', type: 'number' })
-    @ApiResponse({
-        status: 200,
-        description: 'Booking confirmed successfully.',
-    })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
-    @ApiResponse({ status: 403, description: 'Forbidden.' })
     @Post('booking/:simid/:bookingid/confirm')
     async confirmBooking(
         @Param('simid') simid: string,
@@ -185,12 +138,6 @@ export class HostController {
 
     @ApiOperation({ summary: 'Upload a new simulator with images' })
     @ApiBody({ type: CreateSimulatorDto })
-    @ApiResponse({
-        status: 201,
-        description: 'Simulator uploaded successfully.',
-    })
-    @ApiResponse({ status: 400, description: 'Invalid data.' })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
     @Post('simulator')
     async uploadSimulator(
         @Body() createSimulatorDto: CreateSimulatorDto,
@@ -209,10 +156,6 @@ export class HostController {
         status: 200,
         description: 'Upload URL created successfully.',
     })
-    @ApiResponse({ status: 400, description: 'Invalid content type.' })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
-    @ApiResponse({ status: 403, description: 'Forbidden.' })
-    @ApiResponse({ status: 404, description: 'Simulator not found.' })
     @Post('simulator/:simid/image-upload')
     createSimulatorImageUpload(
         @Param('simid') simid: string,
@@ -228,12 +171,6 @@ export class HostController {
 
     @ApiOperation({ summary: 'Update a simulator' })
     @ApiParam({ name: 'id', description: 'Simulator ID', type: 'number' })
-    @ApiResponse({
-        status: 200,
-        description: 'Simulator updated successfully.',
-    })
-    @ApiResponse({ status: 404, description: 'Simulator not found.' })
-    @ApiCookieAuth('access_token')
     @ApiBody({ type: UpdateSimulatorDto })
     @UseGuards(HostJwtAuthGuard)
     @Patch('simulator/:simid')
@@ -252,14 +189,6 @@ export class HostController {
     @ApiOperation({ summary: 'Confirm simulator image uploads' })
     @ApiBody({ type: UpdateSimulatorDto })
     @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
-    @ApiResponse({
-        status: 200,
-        description: 'Simulator images confirmed and updated successfully.',
-    })
-    @ApiResponse({ status: 400, description: 'Invalid data.' })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
-    @ApiResponse({ status: 403, description: 'Forbidden.' })
-    @ApiResponse({ status: 404, description: 'Simulator or image not found.' })
     @Patch('simulator/:simid/images/confirm')
     confirmSimulatorImages(
         @Param('simid') simid: string,

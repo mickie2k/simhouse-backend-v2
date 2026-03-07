@@ -34,6 +34,33 @@ export class SimulatorQueryDto extends PaginationDto {
     search?: string;
 
     @ApiPropertyOptional({
+        description: 'City ID from the cities list',
+        example: 1,
+    })
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    cityId?: number;
+
+    @ApiPropertyOptional({
+        description: 'Province ID from the provinces list',
+        example: 1,
+    })
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    provinceId?: number;
+
+    @ApiPropertyOptional({
+        description: 'Country ID from the countries list',
+        example: 1,
+    })
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    countryId?: number;
+
+    @ApiPropertyOptional({
         description: 'Minimum price per hour filter',
         minimum: 0,
         example: 100,

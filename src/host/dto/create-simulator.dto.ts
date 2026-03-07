@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+    ArrayNotEmpty,
+    IsArray,
+    IsNotEmpty,
+    IsNumber,
+    IsString,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateSimulatorDto {
@@ -24,6 +30,8 @@ export class CreateSimulatorDto {
         example: 1,
     })
     @IsNotEmpty()
+    @IsArray()
+    @ArrayNotEmpty()
     @IsNumber({}, { each: true })
     simtypeid: number[];
 
