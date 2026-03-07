@@ -6,8 +6,9 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { StorageService } from 'src/storage/storage.service';
 import { CreateSimulatorDto } from '../host/dto/create-simulator.dto';
-import { UpdateSimulatorDto } from './dto/update-simulator.dto';
+import { UpdateSimulatorDto } from '../host/dto/update-simulator.dto';
 import { FindNearestSimulatorsDto } from './dto/find-nearest-simulators.dto';
 import {
     SimulatorQueryDto,
@@ -19,32 +20,19 @@ import {
     PaginatedResponseDto,
 } from '../common/dto/paginated-response.dto';
 
-interface MulterFile {
-    filename: string;
-    originalname: string;
-    mimetype: string;
-    size: number;
-}
-
 @Injectable()
 export class SimulatorService {
     private readonly logger = new Logger(SimulatorService.name);
 
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly storageService: StorageService,
+    ) {}
 
-    async create(
-        createSimulatorDto: CreateSimulatorDto,
-        files: {
-            file1?: MulterFile[];
-            file2?: MulterFile[];
-            file3?: MulterFile[];
-        },
-        hostId: number,
-    ) {
-        // Extract file names or use default
-        const file1 = files?.file1?.[0]?.filename ?? 'noimage.jpg';
-        const file2 = files?.file2?.[0]?.filename ?? 'noimage.jpg';
-        const file3 = files?.file3?.[0]?.filename ?? 'noimage.jpg';
+    async create(createSimulatorDto: CreateSimulatorDto, hostId: number) {
+        const file1 = 'noimage.jpg';
+        const file2 = 'noimage.jpg';
+        const file3 = 'noimage.jpg';
 
         try {
             // Create simulator with images
@@ -152,13 +140,17 @@ export class SimulatorService {
     async update(
         id: number,
         updateSimulatorDto: UpdateSimulatorDto,
-        files: {
-            file1?: MulterFile[];
-            file2?: MulterFile[];
-            file3?: MulterFile[];
-        },
         hostId: number,
     ) {
+        const updateData = this.updateMapping(updateSimulatorDto);
+        const hasUpdates =
+            Object.keys(updateData).length > 0 ||
+            Array.isArray(updateSimulatorDto.simtypeid);
+
+        if (!hasUpdates) {
+            throw new BadRequestException('No update fields provided');
+        }
+
         const simulator = await this.prisma.simulator.findUnique({
             where: { id },
             select: { id: true, hostId: true },
@@ -172,6 +164,31 @@ export class SimulatorService {
             throw new ForbiddenException('You do not own this simulator');
         }
 
+        const updatedSimulator = await this.prisma.$transaction(async (tx) => {
+            const updated = await tx.simulator.update({
+                where: { id },
+                data: updateData,
+            });
+
+            if (updateSimulatorDto.simtypeid?.length) {
+                await tx.simulatorTypeList.deleteMany({
+                    where: { simId: id },
+                });
+                await tx.simulatorTypeList.createMany({
+                    data: updateSimulatorDto.simtypeid.map((typeId) => ({
+                        simId: id,
+                        simTypeId: typeId,
+                    })),
+                });
+            }
+
+            return updated;
+        });
+
+        return updatedSimulator;
+    }
+
+    updateMapping(updateSimulatorDto: UpdateSimulatorDto) {
         const updateData: {
             simListName?: string;
             listDescription?: string | null;
@@ -213,49 +230,25 @@ export class SimulatorService {
             updateData.longitude = updateSimulatorDto.longitude;
         }
 
-        const file1 = files?.file1?.[0]?.filename;
-        const file2 = files?.file2?.[0]?.filename;
-        const file3 = files?.file3?.[0]?.filename;
-
-        if (file1) updateData.firstImage = file1;
-        if (file2) updateData.secondImage = file2;
-        if (file3) updateData.thirdImage = file3;
-
-        const hasUpdates =
-            Object.keys(updateData).length > 0 ||
-            updateSimulatorDto.simtypeid !== undefined;
-
-        if (!hasUpdates) {
-            throw new BadRequestException('No update fields provided');
+        if (updateSimulatorDto.firstImageKey !== undefined) {
+            updateData.firstImage = this.resolveImageUrl(
+                updateSimulatorDto.firstImageKey,
+            );
         }
 
-        const updatedSimulator = await this.prisma.$transaction(async (tx) => {
-            const updated = await tx.simulator.update({
-                where: { id },
-                data: updateData,
-            });
+        if (updateSimulatorDto.secondImageKey !== undefined) {
+            updateData.secondImage = this.resolveImageUrl(
+                updateSimulatorDto.secondImageKey,
+            );
+        }
 
-            if (updateSimulatorDto.simtypeid) {
-                await tx.simulatorTypeList.deleteMany({
-                    where: { simId: id },
-                });
-                const typeLinks = updateSimulatorDto.simtypeid.map(
-                    (typeId) => ({
-                        simId: id,
-                        simTypeId: typeId,
-                    }),
-                );
-                if (typeLinks.length > 0) {
-                    await tx.simulatorTypeList.createMany({
-                        data: typeLinks,
-                    });
-                }
-            }
+        if (updateSimulatorDto.thirdImageKey !== undefined) {
+            updateData.thirdImage = this.resolveImageUrl(
+                updateSimulatorDto.thirdImageKey,
+            );
+        }
 
-            return updated;
-        });
-
-        return updatedSimulator;
+        return updateData;
     }
 
     async remove(id: number, hostId: number) {
@@ -292,5 +285,10 @@ export class SimulatorService {
         });
 
         return { message: 'Simulator deleted successfully' };
+    }
+
+    private resolveImageUrl(objectKey?: string): string | undefined {
+        if (!objectKey) return undefined;
+        return this.storageService.getPublicUrl(objectKey);
     }
 }

@@ -237,8 +237,7 @@ export class UserService {
     }> {
         return this.storageService.createPresignedUploadUrl({
             contentType,
-            userId,
-            userType: 'customer',
+            path: `customer/${userId}`,
         });
     }
 

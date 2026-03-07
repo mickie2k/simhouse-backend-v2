@@ -1,6 +1,7 @@
 import {
     BadRequestException,
     ConflictException,
+    ForbiddenException,
     Injectable,
     InternalServerErrorException,
     Logger,
@@ -15,6 +16,7 @@ import { StorageService } from 'src/storage/storage.service';
 import { CreateSimulatorDto } from './dto/create-simulator.dto';
 import { UpdateHostProfileDto } from './dto/update-host-profile.dto';
 import { ChangeHostPasswordDto } from './dto/change-host-password.dto';
+import { UpdateSimulatorDto } from 'src/host/dto/update-simulator.dto';
 import * as argon2 from 'argon2';
 
 interface HostProfileResponse {
@@ -33,13 +35,6 @@ interface HostUpdateFields {
     lastName?: string;
     email?: string;
     phone?: string;
-}
-
-interface MulterFile {
-    filename: string;
-    originalname: string;
-    mimetype: string;
-    size: number;
 }
 
 @Injectable()
@@ -158,15 +153,85 @@ export class HostService {
 
     async uploadSimulator(
         createSimulatorDto: CreateSimulatorDto,
-        files: {
-            file1?: MulterFile[];
-            file2?: MulterFile[];
-            file3?: MulterFile[];
-        },
         hostId: number,
     ) {
         // Delegate to SimulatorService for business logic
-        return this.simulatorService.create(createSimulatorDto, files, hostId);
+        return this.simulatorService.create(createSimulatorDto, hostId);
+    }
+
+    async updateSimulator(
+        simId: number,
+        data: UpdateSimulatorDto,
+        hostId: number,
+    ) {
+        return this.simulatorService.update(simId, data, hostId);
+    }
+
+    async confirmSimulatorImages(
+        simId: number,
+        data: UpdateSimulatorDto,
+        hostId: number,
+    ) {
+        const simulator = await this.prisma.simulator.findUnique({
+            where: { id: simId },
+            select: { id: true, hostId: true },
+        });
+
+        if (!simulator) {
+            throw new NotFoundException('Simulator not found');
+        }
+
+        if (simulator.hostId !== hostId) {
+            throw new ForbiddenException('You do not own this simulator');
+        }
+
+        if (data.firstImageKey) {
+            await this.storageService.assertObjectExists(data.firstImageKey);
+        }
+        if (data.secondImageKey) {
+            await this.storageService.assertObjectExists(data.secondImageKey);
+        }
+        if (data.thirdImageKey) {
+            await this.storageService.assertObjectExists(data.thirdImageKey);
+        }
+
+        return this.simulatorService.update(simId, data, hostId);
+    }
+
+    /**
+     * Creates a pre-signed upload URL for a simulator image.
+     */
+    async createSimulatorImageUpload(
+        hostId: number,
+        simId: number,
+        contentType: 'image/jpeg' | 'image/png' | 'image/webp',
+    ): Promise<{
+        uploadUrl: string;
+        publicUrl: string;
+        objectKey: string;
+        expiresInSeconds: number;
+    }> {
+        const simulator = await this.prisma.simulator.findUnique({
+            where: { id: simId },
+            select: { id: true, hostId: true },
+        });
+
+        if (!simulator) {
+            throw new NotFoundException('Simulator not found');
+        }
+
+        if (simulator.hostId !== hostId) {
+            throw new ForbiddenException('You do not own this simulator');
+        }
+
+        const prefix =
+            this.configService.get<string>('S3_SIMULATOR_PREFIX') ??
+            'simulators';
+        return this.storageService.createPresignedUploadUrl({
+            contentType,
+            path: `sim/${simId}`,
+            prefix,
+        });
     }
 
     /**
@@ -284,8 +349,7 @@ export class HostService {
     }> {
         return this.storageService.createPresignedUploadUrl({
             contentType,
-            userId: hostId,
-            userType: 'host',
+            path: `host/${hostId}`,
         });
     }
 

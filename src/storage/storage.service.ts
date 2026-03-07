@@ -2,20 +2,23 @@ import {
     BadRequestException,
     Injectable,
     InternalServerErrorException,
+    NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import {
+    HeadObjectCommand,
+    S3Client,
+    PutObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
-
-type StorageUserType = 'customer' | 'host';
 
 type AllowedContentType = 'image/jpeg' | 'image/png' | 'image/webp';
 
 interface CreatePresignedUploadUrlParams {
     contentType: AllowedContentType;
-    userId: number;
-    userType: StorageUserType;
+    path: string;
+    prefix?: string;
 }
 
 interface PresignedUploadResult {
@@ -58,9 +61,9 @@ export class StorageService {
         const bucketName = this.bucketName;
         const expiresInSeconds = this.getPresignedUrlExpirySeconds();
         const objectKey = this.buildObjectKey(
-            params.userType,
-            params.userId,
             params.contentType,
+            params.path,
+            params.prefix,
         );
         const command = new PutObjectCommand({
             Bucket: bucketName,
@@ -79,16 +82,54 @@ export class StorageService {
         return `${baseUrl}/${objectKey}`;
     }
 
+    async assertObjectExists(objectKey: string): Promise<void> {
+        try {
+            await this.s3Client.send(
+                new HeadObjectCommand({
+                    Bucket: this.bucketName,
+                    Key: objectKey,
+                }),
+            );
+        } catch (error) {
+            const httpStatus = (
+                error as { $metadata?: { httpStatusCode?: number } }
+            ).$metadata?.httpStatusCode;
+            if (httpStatus === 404) {
+                throw new NotFoundException('Uploaded object not found');
+            }
+            throw error;
+        }
+    }
+
     private buildObjectKey(
-        userType: StorageUserType,
-        userId: number,
         contentType: AllowedContentType,
+        path: string,
+        prefix?: string,
     ): string {
-        const prefix =
-            this.configService.get<string>('S3_AVATAR_PREFIX') ?? 'avatars';
+        const resolvedPrefix =
+            prefix ??
+            this.configService.get<string>('S3_AVATAR_PREFIX') ??
+            'avatars';
+        const normalizedPrefix = this.normalizePath(resolvedPrefix);
+        const normalizedPath = this.normalizePath(path);
+        if (!normalizedPath) {
+            throw new BadRequestException('Invalid upload path');
+        }
         const extension = this.getFileExtension(contentType);
         const randomId = randomUUID();
-        return `${prefix}/${userType}/${userId}/${Date.now()}-${randomId}.${extension}`;
+        return `${normalizedPrefix}/${normalizedPath}/${Date.now()}-${randomId}.${extension}`;
+    }
+
+    private normalizePath(value: string): string {
+        const trimmed = value.trim();
+        if (!trimmed) {
+            return '';
+        }
+        const normalized = trimmed.replace(/^\/+|\/+$/g, '');
+        if (normalized.includes('..')) {
+            throw new BadRequestException('Invalid upload path');
+        }
+        return normalized;
     }
 
     private validateContentType(contentType: string): void {

@@ -7,10 +7,7 @@ import {
     Patch,
     UseGuards,
     Request,
-    UseInterceptors,
-    UploadedFiles,
 } from '@nestjs/common';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { HostService } from './host.service';
 import { CreateSimulatorDto } from './dto/create-simulator.dto';
 import { HostJwtAuthGuard } from 'src/auth/host-auth/guards/host-jwt-auth.guard';
@@ -21,7 +18,6 @@ import {
     ApiResponse,
     ApiParam,
     ApiCookieAuth,
-    ApiConsumes,
     ApiBody,
 } from '@nestjs/swagger';
 import { UpdateHostProfileDto } from './dto/update-host-profile.dto';
@@ -29,13 +25,8 @@ import { ChangeHostPasswordDto } from './dto/change-host-password.dto';
 import { CreateHostAvatarUploadDto } from './dto/create-host-avatar-upload.dto';
 import { UpdateHostAvatarDto } from './dto/update-host-avatar.dto';
 import { AuthenticatedHost } from 'src/auth/types/authenticated-host.type';
-
-interface MulterFile {
-    filename: string;
-    originalname: string;
-    mimetype: string;
-    size: number;
-}
+import { CreateSimulatorImageUploadDto } from 'src/simulator/dto/create-simulator-image-upload.dto';
+import { UpdateSimulatorDto } from 'src/host/dto/update-simulator.dto';
 
 @ApiTags('host')
 @ApiCookieAuth('access_token')
@@ -193,29 +184,7 @@ export class HostController {
     }
 
     @ApiOperation({ summary: 'Upload a new simulator with images' })
-    @ApiConsumes('multipart/form-data')
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                simlistname: {
-                    type: 'string',
-                    example: 'Logitech G29 Racing Setup',
-                },
-                listdescription: {
-                    type: 'string',
-                    example: 'Professional racing simulator setup',
-                },
-                simtypeid: { type: 'number', example: 1 },
-                priceperhour: { type: 'number', example: 200 },
-                modid: { type: 'number', example: 1 },
-                file1: { type: 'string', format: 'binary' },
-                file2: { type: 'string', format: 'binary' },
-                file3: { type: 'string', format: 'binary' },
-            },
-            required: ['simlistname', 'simtypeid', 'priceperhour', 'modid'],
-        },
-    })
+    @ApiBody({ type: CreateSimulatorDto })
     @ApiResponse({
         status: 201,
         description: 'Simulator uploaded successfully.',
@@ -223,26 +192,83 @@ export class HostController {
     @ApiResponse({ status: 400, description: 'Invalid data.' })
     @ApiResponse({ status: 401, description: 'Unauthorized.' })
     @Post('simulator')
-    @UseInterceptors(
-        FileFieldsInterceptor([
-            { name: 'file1', maxCount: 1 },
-            { name: 'file2', maxCount: 1 },
-            { name: 'file3', maxCount: 1 },
-        ]),
-    )
     async uploadSimulator(
         @Body() createSimulatorDto: CreateSimulatorDto,
-        @UploadedFiles()
-        files: {
-            file1?: MulterFile[];
-            file2?: MulterFile[];
-            file3?: MulterFile[];
-        },
         @Request() req: ExpressRequest & { user: AuthenticatedHost },
     ): Promise<unknown> {
         return this.hostService.uploadSimulator(
             createSimulatorDto,
-            files,
+            req.user.id,
+        );
+    }
+
+    @ApiOperation({ summary: 'Create simulator image upload URL' })
+    @ApiBody({ type: CreateSimulatorImageUploadDto })
+    @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
+    @ApiResponse({
+        status: 200,
+        description: 'Upload URL created successfully.',
+    })
+    @ApiResponse({ status: 400, description: 'Invalid content type.' })
+    @ApiResponse({ status: 401, description: 'Unauthorized.' })
+    @ApiResponse({ status: 403, description: 'Forbidden.' })
+    @ApiResponse({ status: 404, description: 'Simulator not found.' })
+    @Post('simulator/:simid/image-upload')
+    createSimulatorImageUpload(
+        @Param('simid') simid: string,
+        @Body() data: CreateSimulatorImageUploadDto,
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ): Promise<unknown> {
+        return this.hostService.createSimulatorImageUpload(
+            req.user.id,
+            +simid,
+            data.contentType,
+        );
+    }
+
+    @ApiOperation({ summary: 'Update a simulator' })
+    @ApiParam({ name: 'id', description: 'Simulator ID', type: 'number' })
+    @ApiResponse({
+        status: 200,
+        description: 'Simulator updated successfully.',
+    })
+    @ApiResponse({ status: 404, description: 'Simulator not found.' })
+    @ApiCookieAuth('access_token')
+    @ApiBody({ type: UpdateSimulatorDto })
+    @UseGuards(HostJwtAuthGuard)
+    @Patch('simulator/:simid')
+    update(
+        @Param('simid') simid: string,
+        @Body() updateSimulatorDto: UpdateSimulatorDto,
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ) {
+        return this.hostService.updateSimulator(
+            +simid,
+            updateSimulatorDto,
+            req.user.id,
+        );
+    }
+
+    @ApiOperation({ summary: 'Confirm simulator image uploads' })
+    @ApiBody({ type: UpdateSimulatorDto })
+    @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
+    @ApiResponse({
+        status: 200,
+        description: 'Simulator images confirmed and updated successfully.',
+    })
+    @ApiResponse({ status: 400, description: 'Invalid data.' })
+    @ApiResponse({ status: 401, description: 'Unauthorized.' })
+    @ApiResponse({ status: 403, description: 'Forbidden.' })
+    @ApiResponse({ status: 404, description: 'Simulator or image not found.' })
+    @Patch('simulator/:simid/images/confirm')
+    confirmSimulatorImages(
+        @Param('simid') simid: string,
+        @Body() data: UpdateSimulatorDto,
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ): Promise<unknown> {
+        return this.hostService.confirmSimulatorImages(
+            +simid,
+            data,
             req.user.id,
         );
     }
