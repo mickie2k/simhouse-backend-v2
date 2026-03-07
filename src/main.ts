@@ -4,6 +4,7 @@ import { GenericExceptionFilter } from './common/filters/generic-exception.filte
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
+import { httpLoggingMiddleware } from './common/middleware/http-logging.middleware';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -17,6 +18,7 @@ async function bootstrap() {
     app.useGlobalFilters(new GenericExceptionFilter());
 
     app.use(cookieParser());
+    app.use(httpLoggingMiddleware);
 
     // Enable validation pipe globally
     app.useGlobalPipes(
@@ -79,4 +81,4 @@ async function bootstrap() {
     );
 }
 
-bootstrap();
+void bootstrap();
