@@ -15,7 +15,10 @@ export class ScheduleJobService {
      * 1-hour SimulatorSchedule slots for the next 60 days.
      * Runs at 02:00 daily. Idempotent via unique index + skipDuplicates.
      */
-    @Cron('0 2 * * *')
+    @Cron('0 2 * * *', {
+        name: 'materializeSchedules',
+        timeZone: 'Asia/Bangkok',
+    })
     async materializeSchedules(): Promise<void> {
         this.logger.log('Starting schedule materialization...');
 
@@ -99,7 +102,10 @@ export class ScheduleJobService {
      * Cleanup cron: removes past-date unbooked slots to keep table lean.
      * Runs at 03:00 daily.
      */
-    @Cron('0 3 * * *')
+    @Cron('0 3 * * *', {
+        name: 'cleanupPastSlots',
+        timeZone: 'Asia/Bangkok',
+    })
     async cleanupPastSlots(): Promise<void> {
         this.logger.log('Starting past slot cleanup...');
 
