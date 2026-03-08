@@ -190,10 +190,15 @@ export class SimulatorService {
     }
 
     findOne(id: number) {
-        const simulator = this.prisma.simulator.findUnique({
+        return this.prisma.simulator.findUnique({
             where: { id },
+            include: {
+                mod: {
+                    include: { brand: true },
+                },
+                host: true,
+            },
         });
-        return simulator;
     }
 
     async findNearestLocation(query: FindNearestSimulatorsDto) {

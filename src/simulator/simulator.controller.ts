@@ -174,12 +174,16 @@ export class SimulatorController {
     @ApiResponse({ status: 200, description: 'Available slots returned.' })
     @ApiResponse({ status: 404, description: 'Simulator not found.' })
     @Get(':id/schedule')
-    getAvailableSlots(
+    async getAvailableSlots(
         @Param('id') id: string,
         @Query('startDate') startDate?: string,
         @Query('endDate') endDate?: string,
     ) {
-        return this.simulatorService.getAvailableSlots(+id, startDate, endDate);
+        return await this.simulatorService.getAvailableSlots(
+            +id,
+            startDate,
+            endDate,
+        );
     }
 
     @ApiOperation({ summary: 'Get a simulator by ID' })
