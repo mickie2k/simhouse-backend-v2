@@ -217,7 +217,7 @@ export class HostController {
     @ApiOperation({ summary: 'Create a schedule template for a simulator' })
     @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
     @ApiBody({ type: CreateScheduleTemplateDto })
-    @Post('schedule-template/:simid')
+    @Post('simulator/:simid/schedule-template')
     createScheduleTemplate(
         @Param('simid') simid: string,
         @Body() dto: CreateScheduleTemplateDto,
@@ -233,7 +233,7 @@ export class HostController {
     @ApiOperation({ summary: 'Bulk create schedule templates (multiple days)' })
     @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
     @ApiBody({ type: BulkCreateScheduleTemplateDto })
-    @Post('schedule-template/:simid/bulk')
+    @Post('simulator/:simid/schedule-template/bulk')
     bulkCreateScheduleTemplates(
         @Param('simid') simid: string,
         @Body() dto: BulkCreateScheduleTemplateDto,
@@ -248,7 +248,7 @@ export class HostController {
 
     @ApiOperation({ summary: 'Get all schedule templates for a simulator' })
     @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
-    @Get('schedule-template/:simid')
+    @Get('simulator/:simid/schedule-template')
     getScheduleTemplates(
         @Param('simid') simid: string,
         @Request() req: ExpressRequest & { user: AuthenticatedHost },
