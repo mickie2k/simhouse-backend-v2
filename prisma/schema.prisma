@@ -129,6 +129,7 @@ model Simulator {
   schedules       SimulatorSchedule[]
   scheduleTemplates ScheduleTemplate[]
   typeList        SimulatorTypeList[]
+  facilities       SimulatorFacility[]
 
   @@map("simulatorlist")
 }
@@ -186,6 +187,7 @@ model Booking {
   simulator     Simulator     @relation(fields: [simId], references: [id])
   bookingStatus BookingStatus @relation(fields: [statusId], references: [id])
   bookingList   BookingList[]
+  review        Review?
 
   @@map("booking")
 }
@@ -200,3 +202,64 @@ model BookingList {
   @@map("bookinglist")
 }
 
+model Review {
+  id         Int       @id @default(autoincrement()) @map("ReviewID")
+  comment    String?   @map("Comment") @db.VarChar(1000)
+  overallRating Int       @map("OverallRating") @db.SmallInt
+  bookingId  Int       @map("BookingID") @unique
+  booking    Booking   @relation(fields: [bookingId], references: [id])
+  reviewList ReviewList[]
+
+  @@map("review")
+}
+
+model ReviewType {
+  id         Int       @id @default(autoincrement()) @map("ReviewTypeID")
+  typeName   String    @map("TypeName") @db.VarChar(32)
+  reviews    ReviewList[]
+
+  @@map("reviewtype")
+}
+
+model ReviewList {
+  reviewId   Int       @map("ReviewID")
+  typeId     Int       @map("TypeID")
+  rating     Int       @map("Rating") @db.SmallInt
+  review     Review    @relation(fields: [reviewId], references: [id])
+  reviewType ReviewType @relation(fields: [typeId], references: [id])
+
+  @@id([reviewId, typeId])
+  @@map("reviewlist")
+}
+
+enum FacilityCategory {
+  HARDWARE
+  GAMES_AND_CONTENT
+  SEATING_AND_MOTION
+  CONNECTIVITY
+  ENVIRONMENT
+  VENUE
+}
+
+model Facility {
+  id          Int               @id @default(autoincrement())
+  name        String            @db.VarChar(100)
+  icon        String?           @db.VarChar(50)  // Icon identifier (e.g. "wifi", "parking")
+  category    FacilityCategory
+
+  simulators  SimulatorFacility[]
+
+  @@map("facility")
+}
+
+model SimulatorFacility {
+  simId       Int
+  facilityId  Int
+  assignedAt  DateTime  @default(now())
+
+  simulator   Simulator @relation(fields: [simId], references: [id], onDelete: Cascade)
+  facility    Facility  @relation(fields: [facilityId], references: [id])
+
+  @@id([simId, facilityId])
+  @@map("simulator_facility")
+}
