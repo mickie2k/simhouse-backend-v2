@@ -157,14 +157,39 @@ export class SimulatorService {
         };
     }
 
-    async findAll(
+    async findAll() {
+        const limit = 10;
+        const sortBy = SimulatorSortBy.ID;
+        const sortOrder = SortOrder.ASC;
+
+        const simulators = await this.prisma.simulator.findMany({
+            take: limit,
+            orderBy: { [sortBy]: sortOrder },
+            include: {
+                mod: {
+                    include: { brand: true },
+                },
+                typeList: {
+                    include: { simType: true },
+                },
+            },
+        });
+        return simulators;
+    }
+
+    async find(
         query: SimulatorQueryDto,
     ): Promise<PaginatedResponseDto<object>> {
+        const defaultLocationCityId = 106448; //Bangkok
         const page = query.page ?? 1;
         const limit = query.limit ?? 10;
         const skip = (page - 1) * limit;
         const sortBy = query.sortBy ?? SimulatorSortBy.ID;
         const sortOrder = query.sortOrder ?? SortOrder.ASC;
+
+        if (!query.cityId && !query.provinceId && !query.countryId) {
+            query.cityId = defaultLocationCityId;
+        }
 
         const where = this.buildWhereClause(query);
 
@@ -185,7 +210,11 @@ export class SimulatorService {
             }),
             this.prisma.simulator.count({ where }),
         ]);
-
+        this.logger.log(
+            `Retrieved ${simulators.length} simulators (total: ${total}) for page ${page} with filters: ${JSON.stringify(
+                query,
+            )}`,
+        );
         return createPaginatedResponse(simulators, total, page, limit);
     }
 
@@ -466,7 +495,7 @@ export class SimulatorService {
             dateFilter.lte = new Date(endDate);
         }
 
-        return this.prisma.simulatorSchedule.findMany({
+        const schedules = await this.prisma.simulatorSchedule.findMany({
             where: {
                 simId,
                 available: true,
@@ -481,5 +510,24 @@ export class SimulatorService {
             },
             orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
         });
+        const formatSchedules = schedules.map((s) => ({
+            ...s,
+            startTime: this.formatTime(s.startTime),
+            endTime: this.formatTime(s.endTime),
+        }));
+        return formatSchedules;
+    }
+
+    private formatTime(date: Date): string {
+        const timeOptions: Intl.DateTimeFormatOptions = {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false, // Use 24-hour format
+            timeZone: 'UTC', // Ensure time is treated as UTC
+        };
+
+        // Format the time
+        const formattedTime = date.toLocaleTimeString('en-GB', timeOptions);
+        return formattedTime;
     }
 }

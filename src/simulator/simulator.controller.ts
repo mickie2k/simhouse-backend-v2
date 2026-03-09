@@ -33,6 +33,16 @@ export class SimulatorController {
     constructor(private readonly simulatorService: SimulatorService) {}
 
     @ApiOperation({ summary: 'Get all simulators' })
+    @ApiResponse({
+        status: 200,
+        description: 'Simulators retrieved successfully limit 10',
+    })
+    @Get()
+    findAll() {
+        return this.simulatorService.findAll();
+    }
+
+    @ApiOperation({ summary: 'Get all simulators' })
     @ApiQuery({
         name: 'page',
         type: Number,
@@ -94,9 +104,9 @@ export class SimulatorController {
         description:
             'Simulators retrieved successfully with pagination metadata.',
     })
-    @Get()
-    findAll(@Query() query: SimulatorQueryDto) {
-        return this.simulatorService.findAll(query);
+    @Get('search')
+    find(@Query() query: SimulatorQueryDto) {
+        return this.simulatorService.find(query);
     }
 
     @ApiOperation({ summary: 'Find nearest simulators within radius (km)' })
