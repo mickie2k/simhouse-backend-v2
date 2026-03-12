@@ -10,13 +10,7 @@ import {
 import { UserService } from './user.service';
 import { FindUserDto } from './dto/find-user.dto';
 import { CustomerJwtAuthGuard } from 'src/auth/customer-auth/guards/customer-jwt-auth.guard';
-import {
-    ApiBody,
-    ApiCookieAuth,
-    ApiOperation,
-    ApiResponse,
-    ApiTags,
-} from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
 import { CreateUserAvatarUploadDto } from './dto/create-user-avatar-upload.dto';
@@ -33,7 +27,6 @@ export class UserController {
     constructor(private readonly userService: UserService) {}
 
     @ApiOperation({ summary: 'Get current user profile' })
-    @ApiCookieAuth('access_token')
     @ApiResponse({
         status: 200,
         description: 'Profile retrieved successfully.',
@@ -48,7 +41,6 @@ export class UserController {
     }
 
     @ApiOperation({ summary: 'Update current user profile' })
-    @ApiCookieAuth('access_token')
     @ApiResponse({ status: 200, description: 'Profile updated successfully.' })
     @ApiResponse({ status: 400, description: 'Invalid profile data.' })
     @ApiResponse({ status: 401, description: 'Unauthorized.' })
@@ -62,7 +54,6 @@ export class UserController {
     }
 
     @ApiOperation({ summary: 'Change current user password' })
-    @ApiCookieAuth('access_token')
     @ApiResponse({ status: 200, description: 'Password updated successfully.' })
     @ApiResponse({ status: 400, description: 'Invalid password data.' })
     @ApiResponse({ status: 401, description: 'Unauthorized.' })
@@ -76,7 +67,6 @@ export class UserController {
     }
 
     @ApiOperation({ summary: 'Create avatar upload URL' })
-    @ApiCookieAuth('access_token')
     @ApiBody({ type: CreateUserAvatarUploadDto })
     @ApiResponse({
         status: 200,
@@ -97,7 +87,6 @@ export class UserController {
     }
 
     @ApiOperation({ summary: 'Update user avatar URL' })
-    @ApiCookieAuth('access_token')
     @ApiBody({ type: UpdateUserAvatarDto })
     @ApiResponse({ status: 200, description: 'Avatar updated successfully.' })
     @ApiResponse({ status: 400, description: 'Invalid object key.' })
@@ -112,7 +101,6 @@ export class UserController {
     }
 
     @ApiOperation({ summary: 'Find user by email (Admin only)' })
-    @ApiCookieAuth('access_token')
     @ApiResponse({ status: 200, description: 'User found.' })
     @ApiResponse({ status: 401, description: 'Unauthorized.' })
     @ApiResponse({
@@ -126,7 +114,6 @@ export class UserController {
     }
 
     @ApiOperation({ summary: 'Get all users (Admin only)' })
-    @ApiCookieAuth('access_token')
     @ApiResponse({ status: 200, description: 'Users retrieved successfully.' })
     @ApiResponse({ status: 401, description: 'Unauthorized.' })
     @ApiResponse({
@@ -140,7 +127,6 @@ export class UserController {
     }
 
     @ApiOperation({ summary: 'Get current user username' })
-    @ApiCookieAuth('access_token')
     @ApiResponse({
         status: 200,
         description: 'Username retrieved successfully.',
