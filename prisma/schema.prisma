@@ -19,6 +19,7 @@ model User {
   googleId  String?   @unique @map("GoogleID") @db.VarChar(255)
   profileImageUrl String? @map("ProfileImageUrl") @db.VarChar(512)
   bookings  Booking[] @relation("CustomerBookings")
+  reports   CustomerReport[]  @relation("CustomerReports")
 
   @@map("customer")
 }
@@ -187,7 +188,8 @@ model Booking {
   simulator     Simulator     @relation(fields: [simId], references: [id])
   bookingStatus BookingStatus @relation(fields: [statusId], references: [id])
   bookingList   BookingList[]
-  review        Review?
+  review        SimulatorReview?
+  customerReviews CustomerReview[] @relation("BookingCustomerReview")
 
   @@map("booking")
 }
@@ -202,35 +204,50 @@ model BookingList {
   @@map("bookinglist")
 }
 
-model Review {
+model SimulatorReview {
   id         Int       @id @default(autoincrement()) @map("ReviewID")
   comment    String?   @map("Comment") @db.VarChar(1000)
   overallRating Int       @map("OverallRating") @db.SmallInt
   bookingId  Int       @map("BookingID") @unique
   booking    Booking   @relation(fields: [bookingId], references: [id])
-  reviewList ReviewList[]
+  reviewList SimulatorReviewList[]
 
   @@map("review")
 }
 
-model ReviewType {
+model SimulatorReviewType {
   id         Int       @id @default(autoincrement()) @map("ReviewTypeID")
   typeName   String    @map("TypeName") @db.VarChar(32)
-  reviews    ReviewList[]
+  reviews    SimulatorReviewList[]
 
   @@map("reviewtype")
 }
 
-model ReviewList {
+model SimulatorReviewList {
   reviewId   Int       @map("ReviewID")
   typeId     Int       @map("TypeID")
   rating     Int       @map("Rating") @db.SmallInt
-  review     Review    @relation(fields: [reviewId], references: [id])
-  reviewType ReviewType @relation(fields: [typeId], references: [id])
+  review     SimulatorReview    @relation(fields: [reviewId], references: [id])
+  reviewType SimulatorReviewType @relation(fields: [typeId], references: [id])
 
   @@id([reviewId, typeId])
   @@map("reviewlist")
 }
+
+
+model CustomerReview {
+  id        Int      @id @default(autoincrement())
+  rating    Int      @db.SmallInt // 1-5 stars
+  comment   String?  @db.Text
+  bookingId Int      @unique // One customer review per booking
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking   Booking  @relation("BookingCustomerReview", fields: [bookingId], references: [id])
+
+  @@map("customer_review")
+}
+
 
 enum FacilityCategory {
   HARDWARE
@@ -262,4 +279,43 @@ model SimulatorFacility {
 
   @@id([simId, facilityId])
   @@map("simulator_facility")
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_APPROVAL
+  BANNED
+}
+
+enum ReportStatus {
+  PENDING
+  INVESTIGATING
+  RESOLVED
+  DISMISSED
+}
+
+
+model Admin {
+  id          Int         @id @default(autoincrement())
+  username    String      @unique @db.VarChar(100)
+  password    String      @db.VarChar(255)
+  email       String      @unique @db.VarChar(255)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+
+  @@map("admin")
+}
+
+model CustomerReport {
+  id            Int           @id @default(autoincrement())
+  reason        String        @db.Text
+  status        ReportStatus  @default(PENDING)
+  adminNote     String?       @db.Text
+  createdAt     DateTime      @default(now())
+  resolvedAt    DateTime?
+  userId    Int           @map("CustomerID")
+  user     User          @relation("CustomerReports", fields: [userId], references: [id])
+  
+  @@map("report")
 }
