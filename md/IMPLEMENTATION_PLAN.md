@@ -30,55 +30,75 @@ This document outlines all unimplemented features and incomplete functionality i
 
 #### Description
 
-Allow renters to review and rate simulators after using them. Reviews should be public and help other users make informed decisions.
+A two-way review system after a completed booking:
+
+- **Customers** can review and rate the simulator. Reviews are public and help other customers make informed decisions.
+- **Hosts** can review and rate the customer who used their simulator. Customer ratings are visible to other hosts, helping them assess incoming renters before accepting a booking.
 
 #### Required Components
 
 - **Database Models:**
-    - `Review` model (rating, comment, customerId, simId, bookingId, createdAt)
-    - Add average rating field to Simulator model
-    - Add review count field to Simulator model
+    - `SimulatorReview` model (rating, comment, customerId, simId, bookingId, createdAt) — Customer reviews a simulator
+    - `CustomerReview` model (rating, comment, hostId, customerId, bookingId, createdAt) — Host reviews a customer
+    - Add `avgSimRating` and `simReviewCount` fields to `Simulator` model
+    - Add `avgCustomerRating` and `customerReviewCount` fields to `User` (Customer) model
 
 - **Backend Modules:**
     - `src/review/` directory structure
         - `review.module.ts`
         - `review.controller.ts`
         - `review.service.ts`
-        - `dto/create-review.dto.ts`
+        - `dto/create-simulator-review.dto.ts`
+        - `dto/create-customer-review.dto.ts`
         - `dto/update-review.dto.ts`
 
 - **API Endpoints:**
-    - `POST /review` - Create a review (Customer only, requires completed booking)
-    - `GET /review/simulator/:id` - Get all reviews for a simulator
-    - `GET /review/customer/:id` - Get all reviews by a customer
-    - `PUT /review/:id` - Update own review
-    - `DELETE /review/:id` - Delete own review (Customer only)
-    - `GET /review/:id` - Get specific review
+
+    _Simulator Reviews (Customer → Simulator):_
+    - `POST /review/simulator` - Create a simulator review (Customer only, requires completed booking)
+    - `GET /review/simulator/:simId` - Get all reviews for a simulator
+    - `GET /review/simulator/by-customer/:customerId` - Get all simulator reviews written by a customer
+    - `PUT /review/simulator/:id` - Update own simulator review (Customer only)
+    - `DELETE /review/simulator/:id` - Delete own simulator review (Customer only)
+
+    _Customer Reviews (Host → Customer):_
+    - `POST /review/customer` - Create a customer review (Host only, requires completed booking)
+    - `GET /review/customer/:customerId` - Get all reviews for a customer (visible to hosts)
+    - `GET /review/customer/by-host/:hostId` - Get all customer reviews written by a host
+    - `PUT /review/customer/:id` - Update own customer review (Host only)
+    - `DELETE /review/customer/:id` - Delete own customer review (Host only)
+
+    _Shared:_
+    - `GET /review/:id` - Get a specific review
 
 - **Business Rules:**
-    - Only customers who completed a booking can review
-    - One review per booking
+    - Only customers who completed a booking can leave a simulator review
+    - Only hosts whose simulator was booked in the completed booking can leave a customer review
+    - One simulator review per booking; one customer review per booking
     - Rating scale: 1-5 stars
-    - Review must be within 30 days of booking completion
-    - Hosts can reply to reviews (future feature)
+    - Reviews must be submitted within 30 days of booking completion
+    - Customer ratings (from hosts) are visible to all hosts, not to the general public
+    - Hosts can reply to simulator reviews (future feature)
 
 #### Implementation Steps
 
-1. Add Review model to Prisma schema
-2. Run database migration
-3. Create review module with NestJS CLI
-4. Implement review service with business logic
-5. Create DTOs with class-validator
-6. Implement controller endpoints
-7. Add authorization guards (customer only)
-8. Update Simulator service to include average rating calculation
-9. Write unit tests for review service
-10. Write e2e tests for review endpoints
-11. Update Swagger documentation
+1. Add `SimulatorReview` and `CustomerReview` models to Prisma schema
+2. Add rating aggregate fields to `Simulator` and `User` models
+3. Run database migration
+4. Create review module with NestJS CLI
+5. Implement review service with business logic for both review types
+6. Create DTOs with class-validator (`CreateSimulatorReviewDto`, `CreateCustomerReviewDto`, `UpdateReviewDto`)
+7. Implement controller endpoints for both review flows
+8. Add authorization guards (Customer guard for simulator reviews, Host guard for customer reviews)
+9. Update Simulator service to recalculate average rating on review create/update/delete
+10. Update User service to recalculate customer average rating on review create/update/delete
+11. Write unit tests for review service
+12. Write e2e tests for both review endpoints
+13. Update Swagger documentation
 
-#### Estimated Complexity: Medium
+#### Estimated Complexity: Medium-High
 
-**Time Estimate:** 1-2 days
+**Time Estimate:** 2-3 days
 
 ---
 
@@ -703,26 +723,55 @@ findAllUsers(){
 #### 1. Review System Tables
 
 ```prisma
-model Review {
+// Customer reviews a simulator
+model SimulatorReview {
   id          Int       @id @default(autoincrement())
   rating      Int       // 1-5 stars
   comment     String?   @db.Text
   customerId  Int
   simId       Int
-  bookingId   Int       @unique // One review per booking
+  bookingId   Int       @unique // One simulator review per booking
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  customer    User      @relation(fields: [customerId], references: [id])
+  customer    User      @relation("CustomerSimulatorReviews", fields: [customerId], references: [id])
   simulator   Simulator @relation(fields: [simId], references: [id])
-  booking     Booking   @relation(fields: [bookingId], references: [id])
+  booking     Booking   @relation("BookingSimulatorReview", fields: [bookingId], references: [id])
 
-  @@map("review")
+  @@map("simulator_review")
+}
+
+// Host reviews a customer
+model CustomerReview {
+  id           Int       @id @default(autoincrement())
+  rating       Int       // 1-5 stars
+  comment      String?   @db.Text
+  hostId       Int
+  customerId   Int
+  bookingId    Int       @unique // One customer review per booking
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  host         Host      @relation("HostCustomerReviews", fields: [hostId], references: [id])
+  customer     User      @relation("CustomerReviewsReceived", fields: [customerId], references: [id])
+  booking      Booking   @relation("BookingCustomerReview", fields: [bookingId], references: [id])
+
+  @@map("customer_review")
 }
 
 // Add to Simulator model:
-// avgRating    Decimal?  @map("AvgRating") @db.Decimal(3, 2)
-// reviewCount  Int       @default(0) @map("ReviewCount")
+// avgSimRating      Decimal?  @db.Decimal(3, 2)
+// simReviewCount    Int       @default(0)
+// simulatorReviews  SimulatorReview[]
+
+// Add to User (Customer) model:
+// avgCustomerRating      Decimal?  @db.Decimal(3, 2)
+// customerReviewCount    Int       @default(0)
+// customerReviewsReceived CustomerReview[] @relation("CustomerReviewsReceived")
+// simulatorReviews        SimulatorReview[] @relation("CustomerSimulatorReviews")
+
+// Add to Host model:
+// customerReviewsGiven  CustomerReview[] @relation("HostCustomerReviews")
 ```
 
 #### 2. Notification System Tables
