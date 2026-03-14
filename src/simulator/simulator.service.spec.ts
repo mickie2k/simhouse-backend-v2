@@ -4,6 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SimulatorService } from './simulator.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { ReviewService } from '../review/review.service';
 import {
     SimulatorQueryDto,
     SimulatorSortBy,
@@ -32,6 +33,19 @@ const mockStorageFactory = () => ({
 describe('SimulatorService', () => {
     let service: SimulatorService;
 
+    type PaginationMeta = {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+        hasNextPage: boolean;
+        hasPreviousPage: boolean;
+    };
+
+    const getMeta = (result: unknown): PaginationMeta => {
+        return (result as { meta: PaginationMeta }).meta;
+    };
+
     const mockSimulators = [
         {
             id: 1,
@@ -46,6 +60,12 @@ describe('SimulatorService', () => {
             firstImage: 'noimage.jpg',
             secondImage: 'noimage.jpg',
             thirdImage: 'noimage.jpg',
+            city: {
+                id: 1,
+                name: 'Bangkok',
+                province: { name: 'Bangkok' },
+                country: { name: 'Thailand' },
+            },
         },
         {
             id: 2,
@@ -60,8 +80,21 @@ describe('SimulatorService', () => {
             firstImage: 'noimage.jpg',
             secondImage: 'noimage.jpg',
             thirdImage: 'noimage.jpg',
+            city: {
+                id: 2,
+                name: 'Chiang Mai',
+                province: { name: 'Chiang Mai' },
+                country: { name: 'Thailand' },
+            },
         },
     ];
+
+    const expectedFlattenedSimulators = mockSimulators.map((simulator) => ({
+        ...simulator,
+        city: simulator.city.name,
+        province: simulator.city.province?.name,
+        country: simulator.city.country.name,
+    }));
 
     beforeEach(async () => {
         jest.clearAllMocks();
@@ -76,6 +109,10 @@ describe('SimulatorService', () => {
                 {
                     provide: StorageService,
                     useFactory: mockStorageFactory,
+                },
+                {
+                    provide: ReviewService,
+                    useValue: {},
                 },
             ],
         }).compile();
@@ -94,78 +131,85 @@ describe('SimulatorService', () => {
                 mockTransaction.mockResolvedValue([mockSimulators, total]);
 
                 const query: SimulatorQueryDto = { page: 1, limit: 10 };
-                const result = await service.findAll(query);
+                const result = await service.find(query);
+                const meta = getMeta(result);
 
                 expect(mockTransaction).toHaveBeenCalledTimes(1);
-                expect(result.data).toEqual(mockSimulators);
-                expect(result.meta.total).toBe(total);
-                expect(result.meta.page).toBe(1);
-                expect(result.meta.limit).toBe(10);
-                expect(result.meta.totalPages).toBe(1);
-                expect(result.meta.hasNextPage).toBe(false);
-                expect(result.meta.hasPreviousPage).toBe(false);
+                expect(result.data).toEqual(expectedFlattenedSimulators);
+                expect(meta.total).toBe(total);
+                expect(meta.page).toBe(1);
+                expect(meta.limit).toBe(10);
+                expect(meta.totalPages).toBe(1);
+                expect(meta.hasNextPage).toBe(false);
+                expect(meta.hasPreviousPage).toBe(false);
             });
 
             it('should return correct totalPages and hasNextPage for multiple pages', async () => {
                 mockTransaction.mockResolvedValue([mockSimulators, 25]);
 
                 const query: SimulatorQueryDto = { page: 1, limit: 10 };
-                const result = await service.findAll(query);
+                const result = await service.find(query);
+                const meta = getMeta(result);
 
-                expect(result.meta.totalPages).toBe(3);
-                expect(result.meta.hasNextPage).toBe(true);
-                expect(result.meta.hasPreviousPage).toBe(false);
+                expect(meta.totalPages).toBe(3);
+                expect(meta.hasNextPage).toBe(true);
+                expect(meta.hasPreviousPage).toBe(false);
             });
 
             it('should set hasPreviousPage to true when on page 2', async () => {
                 mockTransaction.mockResolvedValue([mockSimulators, 25]);
 
-                const result = await service.findAll({ page: 2, limit: 10 });
+                const result = await service.find({ page: 2, limit: 10 });
+                const meta = getMeta(result);
 
-                expect(result.meta.hasPreviousPage).toBe(true);
-                expect(result.meta.hasNextPage).toBe(true);
-                expect(result.meta.page).toBe(2);
+                expect(meta.hasPreviousPage).toBe(true);
+                expect(meta.hasNextPage).toBe(true);
+                expect(meta.page).toBe(2);
             });
 
             it('should set hasNextPage to false on last page', async () => {
                 mockTransaction.mockResolvedValue([mockSimulators, 25]);
 
-                const result = await service.findAll({ page: 3, limit: 10 });
+                const result = await service.find({ page: 3, limit: 10 });
+                const meta = getMeta(result);
 
-                expect(result.meta.hasNextPage).toBe(false);
-                expect(result.meta.hasPreviousPage).toBe(true);
+                expect(meta.hasNextPage).toBe(false);
+                expect(meta.hasPreviousPage).toBe(true);
             });
 
             it('should default page=1 and limit=10 when not provided', async () => {
                 mockTransaction.mockResolvedValue([mockSimulators, 5]);
 
-                const result = await service.findAll({});
+                const result = await service.find({});
+                const meta = getMeta(result);
 
-                expect(result.meta.page).toBe(1);
-                expect(result.meta.limit).toBe(10);
+                expect(meta.page).toBe(1);
+                expect(meta.limit).toBe(10);
             });
 
             it('should return empty data when no simulators exist', async () => {
                 mockTransaction.mockResolvedValue([[], 0]);
 
-                const result = await service.findAll({ page: 1, limit: 10 });
+                const result = await service.find({ page: 1, limit: 10 });
+                const meta = getMeta(result);
 
                 expect(result.data).toEqual([]);
-                expect(result.meta.total).toBe(0);
-                expect(result.meta.totalPages).toBe(0);
-                expect(result.meta.hasNextPage).toBe(false);
-                expect(result.meta.hasPreviousPage).toBe(false);
+                expect(meta.total).toBe(0);
+                expect(meta.totalPages).toBe(0);
+                expect(meta.hasNextPage).toBe(false);
+                expect(meta.hasPreviousPage).toBe(false);
             });
 
             it('should call $transaction once and return correct meta for page 3, limit 5', async () => {
                 mockTransaction.mockResolvedValue([[], 100]);
 
-                const result = await service.findAll({ page: 3, limit: 5 });
+                const result = await service.find({ page: 3, limit: 5 });
+                const meta = getMeta(result);
 
                 expect(mockTransaction).toHaveBeenCalledTimes(1);
-                expect(result.meta.page).toBe(3);
-                expect(result.meta.limit).toBe(5);
-                expect(result.meta.hasPreviousPage).toBe(true);
+                expect(meta.page).toBe(3);
+                expect(meta.limit).toBe(5);
+                expect(meta.hasPreviousPage).toBe(true);
             });
         });
 
@@ -179,7 +223,7 @@ describe('SimulatorService', () => {
             });
 
             it('should pass minPrice and maxPrice as pricePerHour filter', async () => {
-                await service.findAll({ minPrice: 50, maxPrice: 300 });
+                await service.find({ minPrice: 50, maxPrice: 300 });
 
                 expect(mockFindMany).toHaveBeenCalledWith(
                     expect.objectContaining({
@@ -191,7 +235,7 @@ describe('SimulatorService', () => {
             });
 
             it('should pass simTypeIds as typeList.some filter', async () => {
-                await service.findAll({ simTypeIds: [1, 3] });
+                await service.find({ simTypeIds: [1, 3] });
 
                 expect(mockFindMany).toHaveBeenCalledWith(
                     expect.objectContaining({
@@ -205,7 +249,7 @@ describe('SimulatorService', () => {
             });
 
             it('should apply case-insensitive contains search across text fields', async () => {
-                await service.findAll({ search: 'cockpit' });
+                await service.find({ search: 'cockpit' });
 
                 expect(mockFindMany).toHaveBeenCalledWith(
                     expect.objectContaining({
@@ -254,7 +298,7 @@ describe('SimulatorService', () => {
             });
 
             it('should not add typeList filter when simTypeIds is empty array', async () => {
-                await service.findAll({ simTypeIds: [] });
+                await service.find({ simTypeIds: [] });
 
                 expect(mockFindMany).toHaveBeenCalledWith(
                     expect.objectContaining({
@@ -266,7 +310,7 @@ describe('SimulatorService', () => {
             });
 
             it('should apply sortBy PRICE DESC to orderBy', async () => {
-                await service.findAll({
+                await service.find({
                     sortBy: SimulatorSortBy.PRICE,
                     sortOrder: SortOrder.DESC,
                 });
@@ -279,7 +323,7 @@ describe('SimulatorService', () => {
             });
 
             it('should default orderBy to id asc when sortBy and sortOrder are omitted', async () => {
-                await service.findAll({});
+                await service.find({});
 
                 expect(mockFindMany).toHaveBeenCalledWith(
                     expect.objectContaining({
@@ -289,7 +333,7 @@ describe('SimulatorService', () => {
             });
 
             it('should combine all filters and pagination correctly', async () => {
-                await service.findAll({
+                await service.find({
                     page: 2,
                     limit: 5,
                     search: 'bangkok',
@@ -343,6 +387,7 @@ describe('SimulatorService', () => {
                                     },
                                 },
                             ],
+                            cityId: 106448,
                             pricePerHour: { gte: 100, lte: 400 },
                             typeList: { some: { simTypeId: { in: [2] } } },
                         },
