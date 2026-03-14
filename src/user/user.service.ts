@@ -46,7 +46,6 @@ export class UserService {
                 username: true,
                 firstName: true,
                 lastName: true,
-                password: true,
                 email: true,
                 googleId: true,
             },
@@ -59,7 +58,6 @@ export class UserService {
             username: user.username,
             firstName: user.firstName,
             lastName: user.lastName,
-            password: user.password,
             email: user.email,
             googleId: user.googleId,
         };
@@ -78,7 +76,6 @@ export class UserService {
                 username: true,
                 firstName: true,
                 lastName: true,
-                password: true,
                 email: true,
                 googleId: true,
             },
@@ -91,7 +88,6 @@ export class UserService {
             username: user.username,
             firstName: user.firstName,
             lastName: user.lastName,
-            password: user.password,
             email: user.email,
             googleId: user.googleId,
         };

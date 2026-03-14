@@ -8,7 +8,6 @@ import {
     Request,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { FindUserDto } from './dto/find-user.dto';
 import { CustomerJwtAuthGuard } from 'src/auth/customer-auth/guards/customer-jwt-auth.guard';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
@@ -100,31 +99,31 @@ export class UserController {
         return this.userService.updateAvatar(req.user.id, data.objectKey);
     }
 
-    @ApiOperation({ summary: 'Find user by email (Admin only)' })
-    @ApiResponse({ status: 200, description: 'User found.' })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
-    @ApiResponse({
-        status: 403,
-        description: 'Forbidden - Admin role required.',
-    })
-    @UseGuards(CustomerJwtAuthGuard)
-    @Get('email')
-    findUserByEmail(@Body() data: FindUserDto): Promise<unknown> {
-        return this.userService.findUser(data);
-    }
+    // @ApiOperation({ summary: 'Find user by email (Admin only)' })
+    // @ApiResponse({ status: 200, description: 'User found.' })
+    // @ApiResponse({ status: 401, description: 'Unauthorized.' })
+    // @ApiResponse({
+    //     status: 403,
+    //     description: 'Forbidden - Admin role required.',
+    // })
+    // @UseGuards(CustomerJwtAuthGuard)
+    // @Get('email')
+    // findUserByEmail(@Body() data: FindUserDto): Promise<unknown> {
+    //     return this.userService.findUser(data);
+    // }
 
-    @ApiOperation({ summary: 'Get all users (Admin only)' })
-    @ApiResponse({ status: 200, description: 'Users retrieved successfully.' })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
-    @ApiResponse({
-        status: 403,
-        description: 'Forbidden - Admin role required.',
-    })
-    @UseGuards(CustomerJwtAuthGuard)
-    @Get('all')
-    findAllUsers(): { message: string } {
-        return { message: 'u are admin' };
-    }
+    // @ApiOperation({ summary: 'Get all users (Admin only)' })
+    // @ApiResponse({ status: 200, description: 'Users retrieved successfully.' })
+    // @ApiResponse({ status: 401, description: 'Unauthorized.' })
+    // @ApiResponse({
+    //     status: 403,
+    //     description: 'Forbidden - Admin role required.',
+    // })
+    // @UseGuards(CustomerJwtAuthGuard)
+    // @Get('all')
+    // findAllUsers(): { message: string } {
+    //     return { message: 'u are admin' };
+    // }
 
     @ApiOperation({ summary: 'Get current user username' })
     @ApiResponse({
