@@ -59,7 +59,7 @@ export class CustomerAuthService {
             where: { email },
         });
 
-        if (!user) {
+        if (!user || user.googleId) {
             throw new UnauthorizedException('Invalid credentials');
         }
 

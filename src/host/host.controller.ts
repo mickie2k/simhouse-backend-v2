@@ -22,6 +22,8 @@ import {
     ApiCookieAuth,
     ApiBody,
 } from '@nestjs/swagger';
+import { ReviewService } from '../review/review.service';
+import { CreateCustomerReviewDto } from '../review/dto/create-customer-review.dto';
 import { UpdateHostProfileDto } from './dto/update-host-profile.dto';
 import { ChangeHostPasswordDto } from './dto/change-host-password.dto';
 import { CreateHostAvatarUploadDto } from './dto/create-host-avatar-upload.dto';
@@ -47,7 +49,10 @@ import { ScheduleSlotQueryDto } from './dto/schedule-slot-query.dto';
  * Handles host profile and simulator management endpoints.
  */
 export class HostController {
-    constructor(private readonly hostService: HostService) {}
+    constructor(
+        private readonly hostService: HostService,
+        private readonly reviewService: ReviewService,
+    ) {}
 
     @ApiOperation({ summary: 'Get current host profile' })
     @Get('profile')
@@ -368,5 +373,58 @@ export class HostController {
             +simid,
             req.user.id,
         );
+    }
+
+    // ─── Review Endpoints (Host reviews Customer) ─────────────────
+
+    @ApiOperation({
+        summary: 'Create a review for a customer after completing a booking',
+    })
+    @ApiParam({
+        name: 'bookingid',
+        description: 'Booking ID',
+        type: 'number',
+    })
+    @ApiResponse({
+        status: 201,
+        description: 'Review created successfully.',
+    })
+    @ApiResponse({
+        status: 400,
+        description: 'Invalid data or booking not completed.',
+    })
+    @ApiResponse({ status: 401, description: 'Unauthorized.' })
+    @ApiResponse({
+        status: 404,
+        description: 'Booking not found or not owned by host.',
+    })
+    @ApiResponse({ status: 409, description: 'Review already exists.' })
+    @Post('booking/:bookingid/review')
+    async createCustomerReview(
+        @Param('bookingid') bookingid: string,
+        @Body() createReviewDto: CreateCustomerReviewDto,
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ) {
+        return this.reviewService.createCustomerReview(
+            req.user.id,
+            createReviewDto,
+        );
+    }
+
+    @ApiOperation({
+        summary: 'Get all reviews for a specific simulator',
+    })
+    @ApiParam({
+        name: 'simid',
+        description: 'Simulator ID',
+        type: 'number',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Reviews retrieved successfully.',
+    })
+    @Get('simulator/:simid/reviews')
+    async getSimulatorReviews(@Param('simid') simid: string) {
+        return this.reviewService.getSimulatorReviews(+simid);
     }
 }

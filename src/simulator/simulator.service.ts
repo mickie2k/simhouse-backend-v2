@@ -21,6 +21,8 @@ import {
     createPaginatedResponse,
     PaginatedResponseDto,
 } from '../common/dto/paginated-response.dto';
+import { ReviewService } from 'src/review/review.service';
+import { formatTime } from 'src/common/utils/formatTime';
 
 @Injectable()
 export class SimulatorService {
@@ -29,6 +31,7 @@ export class SimulatorService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly storageService: StorageService,
+        private readonly reviewService: ReviewService,
     ) {}
 
     async create(createSimulatorDto: CreateSimulatorDto, hostId: number) {
@@ -165,16 +168,48 @@ export class SimulatorService {
         const simulators = await this.prisma.simulator.findMany({
             take: limit,
             orderBy: { [sortBy]: sortOrder },
-            include: {
+            select: {
+                id: true,
+                simListName: true,
+                pricePerHour: true,
+                firstImage: true,
+                secondImage: true,
+                thirdImage: true,
+                latitude: true,
+                longitude: true,
+                hostId: true,
+                modId: true,
                 mod: {
-                    include: { brand: true },
+                    select: {
+                        id: true,
+                        modelName: true,
+                        description: true,
+                        brandId: true,
+                        brand: {
+                            select: {
+                                id: true,
+                                brandName: true,
+                            },
+                        },
+                    },
                 },
-                typeList: {
-                    include: { simType: true },
+                city: {
+                    select: {
+                        id: true,
+                        name: true,
+                        province: { select: { name: true } },
+                        country: { select: { name: true } },
+                    },
                 },
             },
         });
-        return simulators;
+        const flattenedSimulators = simulators.map((simulator) => ({
+            ...simulator,
+            city: simulator.city.name,
+            province: simulator.city.province?.name,
+            country: simulator.city.country.name,
+        }));
+        return flattenedSimulators;
     }
 
     async find(
@@ -199,35 +234,91 @@ export class SimulatorService {
                 skip,
                 take: limit,
                 orderBy: { [sortBy]: sortOrder },
-                include: {
+                select: {
+                    id: true,
+                    simListName: true,
+                    pricePerHour: true,
+                    firstImage: true,
+                    secondImage: true,
+                    thirdImage: true,
+                    latitude: true,
+                    longitude: true,
+                    hostId: true,
+                    modId: true,
                     mod: {
-                        include: { brand: true },
+                        select: {
+                            id: true,
+                            modelName: true,
+                            description: true,
+                            brandId: true,
+                            brand: {
+                                select: {
+                                    id: true,
+                                    brandName: true,
+                                },
+                            },
+                        },
                     },
-                    typeList: {
-                        include: { simType: true },
+                    city: {
+                        select: {
+                            id: true,
+                            name: true,
+                            province: { select: { name: true } },
+                            country: { select: { name: true } },
+                        },
                     },
                 },
             }),
             this.prisma.simulator.count({ where }),
         ]);
+
+        const flattenedSimulators = simulators.map((simulator) => ({
+            ...simulator,
+            city: simulator.city.name,
+            province: simulator.city.province?.name,
+            country: simulator.city.country.name,
+        }));
+
         this.logger.log(
-            `Retrieved ${simulators.length} simulators (total: ${total}) for page ${page} with filters: ${JSON.stringify(
+            `Retrieved ${flattenedSimulators.length} simulators (total: ${total}) for page ${page} with filters: ${JSON.stringify(
                 query,
             )}`,
         );
-        return createPaginatedResponse(simulators, total, page, limit);
+        return createPaginatedResponse(flattenedSimulators, total, page, limit);
     }
 
-    findOne(id: number) {
-        return this.prisma.simulator.findUnique({
+    async findOne(id: number) {
+        const simulator = await this.prisma.simulator.findUnique({
             where: { id },
             include: {
                 mod: {
                     include: { brand: true },
                 },
-                host: true,
+                host: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                    },
+                },
+                city: {
+                    include: {
+                        province: true,
+                        country: true,
+                    },
+                },
             },
         });
+        if (!simulator) {
+            throw new NotFoundException('Simulator not found');
+        }
+
+        return {
+            ...simulator,
+            city: simulator.city.name,
+            province: simulator.city.province?.name,
+            country: simulator.city.country.name,
+        };
     }
 
     async findNearestLocation(query: FindNearestSimulatorsDto) {
@@ -310,6 +401,10 @@ export class SimulatorService {
                 distanceKm: distanceMap.get(s.id),
             }))
             .sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
+    }
+
+    async getSimulatorReview(simId: number) {
+        return this.reviewService.getSimulatorReviews(simId);
     }
 
     async update(
@@ -512,22 +607,9 @@ export class SimulatorService {
         });
         const formatSchedules = schedules.map((s) => ({
             ...s,
-            startTime: this.formatTime(s.startTime),
-            endTime: this.formatTime(s.endTime),
+            startTime: formatTime(s.startTime),
+            endTime: formatTime(s.endTime),
         }));
         return formatSchedules;
-    }
-
-    private formatTime(date: Date): string {
-        const timeOptions: Intl.DateTimeFormatOptions = {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false, // Use 24-hour format
-            timeZone: 'UTC', // Ensure time is treated as UTC
-        };
-
-        // Format the time
-        const formattedTime = date.toLocaleTimeString('en-GB', timeOptions);
-        return formattedTime;
     }
 }

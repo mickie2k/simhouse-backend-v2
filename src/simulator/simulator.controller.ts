@@ -196,6 +196,11 @@ export class SimulatorController {
         );
     }
 
+    @Get(':id/review')
+    async getSimulatorReview(@Param('id') id: string) {
+        return await this.simulatorService.getSimulatorReview(+id);
+    }
+
     @ApiOperation({ summary: 'Get a simulator by ID' })
     @ApiParam({ name: 'id', description: 'Simulator ID', type: 'number' })
     @ApiResponse({ status: 200, description: 'Simulator found.' })

@@ -3,14 +3,32 @@ import {
     InternalServerErrorException,
     BadRequestException,
     Logger,
+    NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { BookingRequestDto } from './dto/booking-request.dto';
+import { ReviewService } from '../review/review.service';
+import { formatTime } from 'src/common/utils/formatTime';
 
 @Injectable()
 export class BookingService {
     constructor(private readonly prisma: PrismaService) {}
     private readonly logger = new Logger(BookingService.name);
+    private readonly reviewService: ReviewService;
+
+    async getBookingById(bookingId: number) {
+        return await this.prisma.booking.findUnique({
+            where: { id: bookingId },
+            include: {
+                bookingList: {
+                    include: {
+                        schedule: true,
+                    },
+                    orderBy: { schedule: { startTime: 'asc' } },
+                },
+            },
+        });
+    }
 
     async bookingFromCustomerID(customerId: number) {
         const bookings = await this.prisma.booking.findMany({
@@ -22,7 +40,7 @@ export class BookingService {
     }
 
     async scheduleFromBookingId(bookingId: number, customerId: number) {
-        const schedules = await this.prisma.booking.findMany({
+        const booking = await this.prisma.booking.findUnique({
             where: { id: bookingId, customerId },
             include: {
                 bookingList: {
@@ -33,12 +51,35 @@ export class BookingService {
                 },
                 simulator: {
                     include: {
-                        host: true,
+                        host: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                lastName: true,
+                            },
+                        },
                     },
                 },
             },
         });
-        return schedules;
+
+        if (!booking) {
+            throw new NotFoundException('Booking not found');
+        }
+
+        const format = {
+            ...booking,
+            bookingList: booking.bookingList.map((s) => ({
+                ...s,
+                schedule: {
+                    ...s.schedule,
+                    startTime: formatTime(s.schedule.startTime),
+                    endTime: formatTime(s.schedule.endTime),
+                },
+            })),
+        };
+
+        return format;
     }
 
     async bookingSim(bookingData: BookingRequestDto, customerId: number) {
@@ -172,5 +213,19 @@ export class BookingService {
         }
 
         return result;
+    }
+
+    async getBookingReview(bookingId: number, customerId: number) {
+        const checkBooking = await this.getBookingById(bookingId);
+        if (!checkBooking) {
+            throw new NotFoundException('Booking not found');
+        }
+        if (checkBooking.customerId !== customerId) {
+            throw new NotFoundException('Booking not found for this customer');
+        }
+
+        return await this.reviewService.getSimulatorReviewByBookingId(
+            bookingId,
+        );
     }
 }

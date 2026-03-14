@@ -12,6 +12,8 @@ import { PrismaModule } from './prisma/prisma.module';
 import { SimulatorModule } from './simulator/simulator.module';
 import { StorageModule } from './storage/storage.module';
 import { ScheduleJobModule } from './schedule-job/schedule-job.module';
+import { ReviewModule } from './review/review.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
     imports: [
@@ -26,6 +28,8 @@ import { ScheduleJobModule } from './schedule-job/schedule-job.module';
         SimulatorModule,
         StorageModule,
         ScheduleJobModule,
+        ReviewModule,
+        AdminModule,
     ],
     controllers: [AppController],
     providers: [AppService],
