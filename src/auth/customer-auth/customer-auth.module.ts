@@ -75,8 +75,7 @@ import { AuthenticatedCustomer } from '../types/authenticated-customer.type';
                         name: 'customer-google',
                         callbackURL:
                             configService.get('GOOGLE_CUSTOMER_CALLBACK_URL') ??
-                            configService.get('BACKEND_URL') +
-                                '/auth/customer/google/callback',
+                            '',
                     },
                     authService,
                 );

@@ -154,7 +154,7 @@ export class CustomerAuthService {
         });
 
         if (redirect) {
-            res.redirect(process.env.FRONTEND_URL + '/customer/dashboard');
+            res.redirect(process.env.FRONTEND_URL + '/dashboard');
         } else {
             return {
                 message: 'Login successful',
