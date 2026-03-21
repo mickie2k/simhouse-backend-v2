@@ -118,9 +118,9 @@ model Simulator {
   cityId          Int                 @map("CityID")
   latitude        Decimal             @map("Lat") @db.Decimal(10, 8)
   longitude       Decimal             @map("Long") @db.Decimal(11, 8)
-  firstImage      String              @default("noimage.jpg") @map("firstimage") @db.VarChar(255)
-  secondImage     String              @default("noimage.jpg") @map("secondimage") @db.VarChar(255)
-  thirdImage      String              @default("noimage.jpg") @map("thirdimage") @db.VarChar(255)
+  firstImage      String              @default("noimage.webp") @map("firstimage") @db.VarChar(255)
+  secondImage     String              @default("noimage.webp") @map("secondimage") @db.VarChar(255)
+  thirdImage      String              @default("noimage.webp") @map("thirdimage") @db.VarChar(255)
   hostId          Int                 @map("HostID")
   modId           Int                 @map("ModID")
   bookings        Booking[]
