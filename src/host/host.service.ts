@@ -63,6 +63,35 @@ export class HostService {
         this.secret = this.getSecret();
     }
 
+    async getBookingsFromHostId(hostId: number): Promise<unknown[]> {
+        const bookings = await this.prisma.booking.findMany({
+            where: {
+                simulator: {
+                    hostId,
+                },
+            },
+            include: {
+                bookingStatus: true,
+                customer: {
+                    select: {
+                        id: true,
+                        username: true,
+                        email: true,
+                    },
+                },
+                simulator: {
+                    select: {
+                        id: true,
+                        simListName: true,
+                    },
+                },
+            },
+            orderBy: { bookingDate: 'desc' },
+        });
+
+        return bookings as unknown[];
+    }
+
     async getBookingFromSimID(simId: number, hostId: number) {
         // Get all bookings for a simulator owned by this host
         const bookings = await this.prisma.booking.findMany({

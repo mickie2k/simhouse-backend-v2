@@ -103,6 +103,19 @@ export class HostController {
         return this.hostService.updateAvatar(req.user.id, data.objectKey);
     }
 
+    @ApiOperation({ summary: 'Get all bookings for current host' })
+    @ApiResponse({
+        status: 200,
+        description: 'Bookings retrieved successfully.',
+    })
+    @ApiResponse({ status: 401, description: 'Unauthorized.' })
+    @Get('booking')
+    bookingFromHostID(
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ): Promise<unknown[]> {
+        return this.hostService.getBookingsFromHostId(req.user.id);
+    }
+
     @ApiOperation({ summary: 'Get all bookings for a specific simulator' })
     @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
     @Get('booking/:simid')
