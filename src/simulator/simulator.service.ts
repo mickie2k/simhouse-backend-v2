@@ -90,9 +90,10 @@ export class SimulatorService {
         minPrice?: number;
         maxPrice?: number;
         simTypeIds?: number[];
-        cityId?: number;
-        provinceId?: number;
-        countryId?: number;
+        city?: string;
+        province?: string;
+        country?: string;
+        startDate?: Date;
     }): Prisma.SimulatorWhereInput {
         const priceFilter: { gte?: number; lte?: number } = {};
         const search = filters.search?.trim();
@@ -100,6 +101,13 @@ export class SimulatorService {
         if (filters.minPrice !== undefined) priceFilter.gte = filters.minPrice;
         if (filters.maxPrice !== undefined) priceFilter.lte = filters.maxPrice;
         const hasPriceFilter = Object.keys(priceFilter).length > 0;
+
+        const startDate = filters.startDate
+            ? new Date(
+                  new Date(filters.startDate).toISOString().split('T')[0] +
+                      'T00:00:00.000Z',
+              )
+            : undefined;
 
         return {
             ...(search && {
@@ -150,13 +158,30 @@ export class SimulatorService {
                     },
                 }),
             // Location filters are hierarchical — apply only the most specific one
-            ...(filters.cityId !== undefined
-                ? { cityId: filters.cityId }
-                : filters.provinceId !== undefined
-                  ? { city: { provinceId: filters.provinceId } }
-                  : filters.countryId !== undefined
-                    ? { city: { countryId: filters.countryId } }
+            ...(filters.city !== undefined
+                ? { city: { name: filters.city } }
+                : filters.province !== undefined
+                  ? {
+                        city: {
+                            province: {
+                                OR: [
+                                    { name: filters.province },
+                                    { code: filters.province },
+                                ],
+                            },
+                        },
+                    }
+                  : filters.country !== undefined
+                    ? { city: { country: { name: filters.country } } }
                     : {}),
+            ...(startDate !== undefined && {
+                schedules: {
+                    some: {
+                        date: startDate,
+                        available: true,
+                    },
+                },
+            }),
         };
     }
 
@@ -172,11 +197,14 @@ export class SimulatorService {
                 id: true,
                 simListName: true,
                 pricePerHour: true,
+                listDescription: true,
+                addressDetail: true,
                 firstImage: true,
                 secondImage: true,
                 thirdImage: true,
                 latitude: true,
                 longitude: true,
+                cityId: true,
                 hostId: true,
                 modId: true,
                 mod: {
@@ -193,6 +221,13 @@ export class SimulatorService {
                         },
                     },
                 },
+                host: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                    },
+                },
                 city: {
                     select: {
                         id: true,
@@ -205,6 +240,9 @@ export class SimulatorService {
         });
         const flattenedSimulators = simulators.map((simulator) => ({
             ...simulator,
+            firstImage: this.resolveImageUrl(simulator.firstImage),
+            secondImage: this.resolveImageUrl(simulator.secondImage),
+            thirdImage: this.resolveImageUrl(simulator.thirdImage),
             city: simulator.city.name,
             province: simulator.city.province?.name,
             country: simulator.city.country.name,
@@ -215,15 +253,14 @@ export class SimulatorService {
     async find(
         query: SimulatorQueryDto,
     ): Promise<PaginatedResponseDto<object>> {
-        const defaultLocationCityId = 106448; //Bangkok
         const page = query.page ?? 1;
         const limit = query.limit ?? 10;
         const skip = (page - 1) * limit;
         const sortBy = query.sortBy ?? SimulatorSortBy.ID;
         const sortOrder = query.sortOrder ?? SortOrder.ASC;
 
-        if (!query.cityId && !query.provinceId && !query.countryId) {
-            query.cityId = defaultLocationCityId;
+        if (!query.city && !query.province && !query.country) {
+            query.city = 'Bangkok'; // Default to Bangkok if no location filter is provided
         }
 
         const where = this.buildWhereClause(query);
@@ -238,11 +275,14 @@ export class SimulatorService {
                     id: true,
                     simListName: true,
                     pricePerHour: true,
+                    listDescription: true,
+                    addressDetail: true,
                     firstImage: true,
                     secondImage: true,
                     thirdImage: true,
                     latitude: true,
                     longitude: true,
+                    cityId: true,
                     hostId: true,
                     modId: true,
                     mod: {
@@ -257,6 +297,13 @@ export class SimulatorService {
                                     brandName: true,
                                 },
                             },
+                        },
+                    },
+                    host: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
                         },
                     },
                     city: {
@@ -274,6 +321,9 @@ export class SimulatorService {
 
         const flattenedSimulators = simulators.map((simulator) => ({
             ...simulator,
+            firstImage: this.resolveImageUrl(simulator.firstImage),
+            secondImage: this.resolveImageUrl(simulator.secondImage),
+            thirdImage: this.resolveImageUrl(simulator.thirdImage),
             city: simulator.city.name,
             province: simulator.city.province?.name,
             country: simulator.city.country.name,
@@ -321,16 +371,20 @@ export class SimulatorService {
         };
     }
 
-    async findNearestLocation(query: FindNearestSimulatorsDto) {
+    async findNearestLocation(
+        query: FindNearestSimulatorsDto,
+    ): Promise<PaginatedResponseDto<object>> {
         const {
             lat,
             lng,
             radiusKm,
+            page = 1,
             limit = 20,
             minPrice,
             maxPrice,
             simTypeIds,
         } = query;
+        const skip = (page - 1) * limit;
 
         // Build SQL fragments for optional filters
         const typeJoin =
@@ -371,36 +425,88 @@ export class SimulatorService {
             FROM distances
             WHERE distance_km <= ${radiusKm}
             ORDER BY distance_km ASC
-            LIMIT ${limit}
         `;
 
         this.logger.log(
             `Found ${rawResults.length} simulators within ${radiusKm} km of (${lat}, ${lng})`,
         );
 
-        if (rawResults.length === 0) return [];
+        const total = rawResults.length;
+
+        if (total === 0) return createPaginatedResponse([], 0, page, limit);
+
+        const pagedResults = rawResults.slice(skip, skip + limit);
 
         const distanceMap = new Map<number, number>(
-            rawResults.map((r) => [Number(r.SimID), Number(r.distance_km)]),
+            pagedResults.map((r) => [Number(r.SimID), Number(r.distance_km)]),
         );
 
+        const where = this.buildWhereClause(query);
+        this.logger.log(query);
+        this.logger.log(where);
+
         const simulators = await this.prisma.simulator.findMany({
-            where: { id: { in: [...distanceMap.keys()] } },
-            include: {
-                mod: { include: { brand: true } },
-                typeList: { include: { simType: true } },
+            where: { id: { in: [...distanceMap.keys()] }, ...where },
+            select: {
+                id: true,
+                simListName: true,
+                pricePerHour: true,
+                listDescription: true,
+                addressDetail: true,
+                firstImage: true,
+                secondImage: true,
+                thirdImage: true,
+                latitude: true,
+                longitude: true,
+                cityId: true,
+                hostId: true,
+                modId: true,
+                mod: {
+                    select: {
+                        id: true,
+                        modelName: true,
+                        description: true,
+                        brandId: true,
+                        brand: {
+                            select: {
+                                id: true,
+                                brandName: true,
+                            },
+                        },
+                    },
+                },
+                host: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                    },
+                },
+                city: {
+                    select: {
+                        id: true,
+                        name: true,
+                        province: { select: { name: true } },
+                        country: { select: { name: true } },
+                    },
+                },
             },
         });
 
-        return simulators
+        const flattenedSimulators = simulators
             .map((s) => ({
                 ...s,
                 firstImage: this.resolveImageUrl(s.firstImage),
                 secondImage: this.resolveImageUrl(s.secondImage),
                 thirdImage: this.resolveImageUrl(s.thirdImage),
+                city: s.city.name,
+                province: s.city.province?.name,
+                country: s.city.country.name,
                 distanceKm: distanceMap.get(s.id),
             }))
             .sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
+
+        return createPaginatedResponse(flattenedSimulators, total, page, limit);
     }
 
     async getSimulatorReview(simId: number) {
@@ -559,7 +665,7 @@ export class SimulatorService {
 
     private resolveImageUrl(objectKey?: string): string | undefined {
         if (!objectKey) return undefined;
-        return this.storageService.getPublicUrl(objectKey);
+        return this.storageService.getCdnUrl(objectKey);
     }
 
     /**

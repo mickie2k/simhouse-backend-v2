@@ -34,31 +34,28 @@ export class SimulatorQueryDto extends PaginationDto {
     search?: string;
 
     @ApiPropertyOptional({
-        description: 'City ID from the cities list',
-        example: 1,
+        description: 'City name from the cities list',
+        example: 'Lat Krabang',
     })
     @IsOptional()
-    @Type(() => Number)
-    @IsInt()
-    cityId?: number;
+    @IsString()
+    city?: string;
 
     @ApiPropertyOptional({
-        description: 'Province ID from the provinces list',
-        example: 1,
+        description: 'Province name from the provinces list',
+        example: 'Bangkok',
     })
     @IsOptional()
-    @Type(() => Number)
-    @IsInt()
-    provinceId?: number;
+    @IsString()
+    province?: string;
 
     @ApiPropertyOptional({
-        description: 'Country ID from the countries list',
-        example: 1,
+        description: 'Country name from the countries list',
+        example: 'Thailand',
     })
     @IsOptional()
-    @Type(() => Number)
-    @IsInt()
-    countryId?: number;
+    @IsString()
+    country?: string;
 
     @ApiPropertyOptional({
         description: 'Minimum price per hour filter',
@@ -98,6 +95,14 @@ export class SimulatorQueryDto extends PaginationDto {
     @IsArray()
     @IsInt({ each: true })
     simTypeIds?: number[];
+
+    @ApiPropertyOptional({
+        description: 'Start date for availability filtering (ISO 8601 format)',
+        example: '2024-07-01T10:00:00Z',
+    })
+    @IsOptional()
+    @Type(() => Date)
+    startDate?: Date;
 
     @ApiPropertyOptional({
         description: 'Field to sort by',

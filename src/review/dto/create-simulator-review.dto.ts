@@ -33,13 +33,6 @@ export class ReviewDetailDto {
 
 export class CreateSimulatorReviewDto {
     @ApiProperty({
-        description: 'Booking ID for which the review is being created',
-        example: 1,
-    })
-    @IsInt()
-    bookingId: number;
-
-    @ApiProperty({
         description: 'Overall rating for the simulator (1-5 stars)',
         minimum: 1,
         maximum: 5,

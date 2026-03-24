@@ -46,11 +46,23 @@ export class FindNearestSimulatorsDto {
     @Type(() => Number)
     @IsNumber()
     @Min(0)
+    @Max(200) // Optional: set a reasonable upper limit for radius
     radiusKm: number;
 
     @ApiPropertyOptional({
+        description: 'Page number (default: 1)',
+        example: 1,
+        minimum: 1,
+    })
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    page?: number;
+
+    @ApiPropertyOptional({
         description:
-            'Max number of simulators to return (default: 20, max: 100)',
+            'Max number of simulators per page (default: 20, max: 100)',
         example: 20,
         minimum: 1,
         maximum: 100,
@@ -100,4 +112,12 @@ export class FindNearestSimulatorsDto {
     @IsArray()
     @IsInt({ each: true })
     simTypeIds?: number[];
+
+    @ApiPropertyOptional({
+        description: 'Start date for availability filtering (ISO 8601 format)',
+        example: '2024-07-01T10:00:00Z',
+    })
+    @IsOptional()
+    @Type(() => Date)
+    startDate?: Date;
 }

@@ -23,7 +23,7 @@ export class BookingController {
     constructor(
         private readonly bookingService: BookingService,
         private readonly reviewService: ReviewService,
-    ) {}
+    ) { }
 
     @ApiOperation({ summary: 'Create a new booking' })
     @ApiResponse({ status: 201, description: 'Booking created successfully.' })
@@ -132,6 +132,7 @@ export class BookingController {
     ) {
         return this.reviewService.createSimulatorReview(
             req.user.id,
+            +bookingid,
             createReviewDto,
         );
     }

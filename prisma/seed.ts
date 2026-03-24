@@ -94,6 +94,35 @@ async function main() {
     }
     console.log(`Seeded ${cities.length} cities.`);
 
+    const reviewTypeLabels = [
+        'Cleanliness',
+        'Communication',
+        'Check-in',
+        'Accuracy',
+        'Location',
+        'Value',
+    ];
+    const existingReviewTypes = await prisma.simulatorReviewType.findMany({
+        select: { typeName: true },
+    });
+    const existingTypeNames = new Set(
+        existingReviewTypes.map((reviewType) =>
+            reviewType.typeName.toLowerCase(),
+        ),
+    );
+    const reviewTypesToCreate = reviewTypeLabels
+        .filter((label) => !existingTypeNames.has(label.toLowerCase()))
+        .map((typeName) => ({ typeName }));
+
+    if (reviewTypesToCreate.length > 0) {
+        await prisma.simulatorReviewType.createMany({
+            data: reviewTypesToCreate,
+        });
+    }
+    console.log(
+        `Simulator review types ready: ${reviewTypeLabels.length} (${reviewTypesToCreate.length} newly added).`,
+    );
+
     console.log('Seeding completed!');
 }
 

@@ -82,6 +82,11 @@ export class StorageService {
         return `${baseUrl}/${objectKey}`;
     }
 
+    getCdnUrl(objectKey: string): string {
+        const baseUrl = this.getCDNBaseUrl();
+        return `${baseUrl}/${objectKey}`;
+    }
+
     async assertObjectExists(objectKey: string): Promise<void> {
         try {
             await this.s3Client.send(
@@ -175,5 +180,13 @@ export class StorageService {
         const bucketName = this.bucketName;
         const region = this.region;
         return `https://${bucketName}.s3.${region}.amazonaws.com`;
+    }
+
+    private getCDNBaseUrl(): string {
+        const cdnUrl = this.configService.get<string>('S3_CDN_BASE_URL');
+        if (cdnUrl && cdnUrl.length > 0) {
+            return cdnUrl.replace(/\/+$/, '');
+        }
+        return this.getPublicBaseUrl();
     }
 }

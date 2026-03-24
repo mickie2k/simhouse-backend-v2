@@ -22,11 +22,12 @@ export class ReviewService {
      */
     async createSimulatorReview(
         customerId: number,
+        bookingId: number,
         dto: CreateSimulatorReviewDto,
     ) {
         // 1. Verify booking exists and belongs to customer
         const booking = await this.prisma.booking.findUnique({
-            where: { id: dto.bookingId, customerId },
+            where: { id: bookingId, customerId },
             include: {
                 bookingStatus: true,
                 simulator: true,
@@ -45,9 +46,7 @@ export class ReviewService {
         }
 
         // 2. Check if booking is completed
-        // Assuming status 3 is "Completed" or check by statusName
-        const isCompleted =
-            booking.bookingStatus.statusName.toLowerCase() === 'completed';
+        const isCompleted = booking.bookingStatus.id == 2;
 
         if (!isCompleted) {
             throw new BadRequestException(
@@ -67,7 +66,7 @@ export class ReviewService {
             // Create the main review
             const review = await tx.simulatorReview.create({
                 data: {
-                    bookingId: dto.bookingId,
+                    bookingId: bookingId,
                     overallRating: dto.overallRating,
                     comment: dto.comment,
                 },
@@ -110,7 +109,7 @@ export class ReviewService {
         });
 
         this.logger.log(
-            `Customer ${customerId} created simulator review for booking ${dto.bookingId}`,
+            `Customer ${customerId} created simulator review for booking ${bookingId}`,
         );
 
         return result;
@@ -171,13 +170,73 @@ export class ReviewService {
             0,
         );
         const averageRating =
-            reviews.length > 0 ? totalRating / reviews.length : 0;
+            reviews.length > 0
+                ? parseFloat((totalRating / reviews.length).toFixed(2))
+                : 0;
+
+        // Format actual reviews to match the requested format
+        const monthNames = [
+            'January',
+            'February',
+            'March',
+            'April',
+            'May',
+            'June',
+            'July',
+            'August',
+            'September',
+            'October',
+            'November',
+            'December',
+        ];
+
+        const reviewItems = reviews.map((review) => {
+            const date = new Date(review.booking.bookingDate);
+            return {
+                id: review.id,
+                reviewerName: review.booking.customer.firstName,
+                reviewDate: `${monthNames[date.getMonth()]} ${date.getFullYear()}`,
+                comment: review.comment || '',
+            };
+        });
+
+        // Calculate real rating categories if we have reviews
+        const ratingCategories: { label: string; value: number }[] = [];
+        if (reviews.length > 0) {
+            const categoryMap = new Map<
+                string,
+                { total: number; count: number }
+            >();
+            reviews.forEach((review) => {
+                if (review.reviewList) {
+                    review.reviewList.forEach((detail) => {
+                        const label = detail.reviewType.typeName;
+                        if (!categoryMap.has(label)) {
+                            categoryMap.set(label, { total: 0, count: 0 });
+                        }
+                        const current = categoryMap.get(label)!;
+                        current.total += detail.rating;
+                        current.count += 1;
+                    });
+                }
+            });
+
+            if (categoryMap.size > 0) {
+                categoryMap.forEach((data, label) => {
+                    ratingCategories.push({
+                        label,
+                        value: Number((data.total / data.count).toFixed(1)),
+                    });
+                });
+            }
+        }
 
         return {
             simulatorId,
-            totalReviews: reviews.length,
-            averageRating: parseFloat(averageRating.toFixed(2)),
-            reviews,
+            totalReviews: reviewItems.length,
+            averageRating,
+            ratingCategories,
+            reviewItems,
         };
     }
 
@@ -336,8 +395,7 @@ export class ReviewService {
         }
 
         // 3. Check if booking is completed
-        const isCompleted =
-            booking.bookingStatus.statusName.toLowerCase() === 'completed';
+        const isCompleted = booking.bookingStatus.id === 2;
 
         if (!isCompleted) {
             throw new BadRequestException(
