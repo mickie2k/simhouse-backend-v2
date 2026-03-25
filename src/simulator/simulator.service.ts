@@ -607,21 +607,15 @@ export class SimulatorService {
         }
 
         if (updateSimulatorDto.firstImageKey !== undefined) {
-            updateData.firstImage = this.resolveImageUrl(
-                updateSimulatorDto.firstImageKey,
-            );
+            updateData.firstImage = updateSimulatorDto.firstImageKey;
         }
 
         if (updateSimulatorDto.secondImageKey !== undefined) {
-            updateData.secondImage = this.resolveImageUrl(
-                updateSimulatorDto.secondImageKey,
-            );
+            updateData.secondImage = updateSimulatorDto.secondImageKey;
         }
 
         if (updateSimulatorDto.thirdImageKey !== undefined) {
-            updateData.thirdImage = this.resolveImageUrl(
-                updateSimulatorDto.thirdImageKey,
-            );
+            updateData.thirdImage = updateSimulatorDto.thirdImageKey;
         }
 
         return updateData;
@@ -717,5 +711,70 @@ export class SimulatorService {
             endTime: formatTime(s.endTime),
         }));
         return formatSchedules;
+    }
+
+    /**
+     * Get all simulator brands
+     */
+    async getAllSimulatorBrands() {
+        try {
+            const brands = await this.prisma.simulatorBrand.findMany({
+                select: {
+                    id: true,
+                    brandName: true,
+                },
+                orderBy: {
+                    brandName: 'asc',
+                },
+            });
+            return brands;
+        } catch (error) {
+            this.logger.error(
+                'Failed to fetch simulator brands',
+                error instanceof Error ? error.stack : undefined,
+            );
+            throw new InternalServerErrorException(
+                'Failed to fetch simulator brands',
+            );
+        }
+    }
+
+    /**
+     * Get simulator models, optionally filtered by brand
+     */
+    async getSimulatorModels(brandId?: number) {
+        try {
+            const where: Prisma.SimulatorModWhereInput = {};
+            if (brandId) {
+                where.brandId = brandId;
+            }
+
+            const models = await this.prisma.simulatorMod.findMany({
+                where,
+                select: {
+                    id: true,
+                    modelName: true,
+                    brandId: true,
+                    brand: {
+                        select: {
+                            id: true,
+                            brandName: true,
+                        },
+                    },
+                },
+                orderBy: {
+                    modelName: 'asc',
+                },
+            });
+            return models;
+        } catch (error) {
+            this.logger.error(
+                'Failed to fetch simulator models',
+                error instanceof Error ? error.stack : undefined,
+            );
+            throw new InternalServerErrorException(
+                'Failed to fetch simulator models',
+            );
+        }
     }
 }

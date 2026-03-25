@@ -23,7 +23,7 @@ export class BookingController {
     constructor(
         private readonly bookingService: BookingService,
         private readonly reviewService: ReviewService,
-    ) { }
+    ) {}
 
     @ApiOperation({ summary: 'Create a new booking' })
     @ApiResponse({ status: 201, description: 'Booking created successfully.' })

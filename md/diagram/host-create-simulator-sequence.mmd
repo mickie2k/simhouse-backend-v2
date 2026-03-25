@@ -1,0 +1,68 @@
+sequenceDiagram
+    actor Host as Host (Client)
+    participant HC as Host Controller
+    participant HS as Host Service
+    participant SimSvc as Simulator Service
+    participant SS as Storage Service
+    participant S3 as AWS S3
+    participant DB as Prisma DB
+
+    Note over Host,DB: PHASE 1: Create Simulator (without images)
+    
+    Host->>HC: POST /host/simulator<br/>(name, description, price, location, modid, types)
+    
+    HC->>HS: uploadSimulator(createSimulatorDto, hostId)
+    Note over HS: Note: CreateSimulatorDto has NO image fields
+    
+    HS->>SimSvc: create(createSimulatorDto, hostId)
+    
+    SimSvc->>DB: prisma.simulator.create()
+    Note over DB: Create base simulator with<br/>firstImage, secondImage, thirdImage = null
+    
+    SimSvc->>DB: simulatorTypeList.createMany()
+    Note over DB: Link simulator types
+    
+    DB-->>SimSvc: {id: 123, ...}
+    SimSvc-->>HS: {message: 'Upload Success', simid: 123}
+    HS-->>Host: {message: 'Upload Success', simid: 123}
+    
+    Note over Host,DB: PHASE 2: Upload Images (separate flow)
+    
+    Host->>HC: POST /host/simulator/123/image-upload<br/>{contentType: 'image/jpeg'}
+    
+    HC->>HS: createSimulatorImageUpload(hostId, 123, contentType)
+    
+    HS->>DB: Verify simulator 123 exists & ownership
+    HS->>SS: createPresignedUploadUrl()
+    
+    Note over SS: Generates S3 Key:<br/>simulators/sim/123/{timestamp}-{uuid}.jpg
+    
+    SS->>S3: Get signed PUT URL
+    S3-->>SS: Pre-signed URL
+    
+    SS-->>HS: {uploadUrl, publicUrl, objectKey, expiresInSeconds}
+    HS-->>Host: Return presigned data
+    
+    Host->>S3: PUT /uploadUrl (image file)
+    S3-->>Host: 200 OK
+    
+    Note over Host,DB: PHASE 3: Confirm Image Upload
+    
+    Host->>HC: PATCH /host/simulator/123/images/confirm<br/>{firstImageKey: 'simulators/sim/123/...'}
+    
+    HC->>HS: confirmSimulatorImages(123, imageKeys, hostId)
+    
+    HS->>DB: Verify ownership
+    
+    HS->>SS: assertObjectExists(firstImageKey)
+    Note over SS: Checks image exists in S3
+    
+    HS->>SimSvc: update(123, {firstImageKey}, hostId)
+    
+    Note over SimSvc: updateMapping() converts<br/>S3 key to CDN URL
+    
+    SimSvc->>DB: simulator.update({firstImage: CDN_URL})
+    
+    DB-->>SimSvc: Updated simulator
+    SimSvc-->>HS: Updated simulator
+    HS-->>Host: Complete simulator with image URL

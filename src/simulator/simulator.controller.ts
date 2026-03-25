@@ -201,6 +201,34 @@ export class SimulatorController {
         return await this.simulatorService.getSimulatorReview(+id);
     }
 
+    @ApiOperation({ summary: 'Get all simulator brands' })
+    @ApiResponse({
+        status: 200,
+        description: 'Simulator brands retrieved successfully.',
+    })
+    @Get('brands/list')
+    async getBrands() {
+        return await this.simulatorService.getAllSimulatorBrands();
+    }
+
+    @ApiOperation({ summary: 'Get simulator models' })
+    @ApiQuery({
+        name: 'brandId',
+        type: Number,
+        required: false,
+        description: 'Filter models by brand ID',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Simulator models retrieved successfully.',
+    })
+    @Get('models/list')
+    async getModels(@Query('brandId') brandId?: string) {
+        return await this.simulatorService.getSimulatorModels(
+            brandId ? +brandId : undefined,
+        );
+    }
+
     @ApiOperation({ summary: 'Get a simulator by ID' })
     @ApiParam({ name: 'id', description: 'Simulator ID', type: 'number' })
     @ApiResponse({ status: 200, description: 'Simulator found.' })

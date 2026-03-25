@@ -1,7 +1,9 @@
 import {
+    ForbiddenException,
     BadRequestException,
     Injectable,
     InternalServerErrorException,
+    Logger,
     NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -31,6 +33,7 @@ interface PresignedUploadResult {
 @Injectable()
 export class StorageService {
     private readonly s3Client: S3Client;
+    private readonly logger = new Logger(StorageService.name);
     private bucketName: string;
     private region: string;
 
@@ -88,22 +91,57 @@ export class StorageService {
     }
 
     async assertObjectExists(objectKey: string): Promise<void> {
+        const normalizedObjectKey = this.normalizeObjectKey(objectKey);
+
         try {
             await this.s3Client.send(
                 new HeadObjectCommand({
                     Bucket: this.bucketName,
-                    Key: objectKey,
+                    Key: normalizedObjectKey,
                 }),
             );
         } catch (error) {
             const httpStatus = (
                 error as { $metadata?: { httpStatusCode?: number } }
             ).$metadata?.httpStatusCode;
+            const message =
+                (error as { message?: string }).message || 'Unknown error';
+            const trace =
+                error instanceof Error ? error.stack : JSON.stringify(error);
+
+            this.logger.error(
+                `S3 HeadObject failed for key "${normalizedObjectKey}" with status ${httpStatus ?? 'unknown'}: ${message}`,
+                trace,
+            );
+
             if (httpStatus === 404) {
                 throw new NotFoundException('Uploaded object not found');
             }
-            throw error;
+
+            if (httpStatus === 403) {
+                throw new ForbiddenException(
+                    'Uploaded object is not accessible. Ensure the request uses objectKey and the server has s3:HeadObject permission.',
+                );
+            }
+
+            throw new InternalServerErrorException(
+                `Failed to verify uploaded object: ${message}`,
+            );
         }
+    }
+
+    normalizeObjectKey(value: string): string {
+        const trimmed = value.trim();
+        if (!trimmed) {
+            throw new BadRequestException('Invalid object key');
+        }
+
+        const normalizedKey = this.extractObjectKeyFromInput(trimmed);
+        if (!normalizedKey || normalizedKey.includes('..')) {
+            throw new BadRequestException('Invalid object key');
+        }
+
+        return normalizedKey;
     }
 
     private buildObjectKey(
@@ -188,5 +226,21 @@ export class StorageService {
             return cdnUrl.replace(/\/+$/, '');
         }
         return this.getPublicBaseUrl();
+    }
+
+    private extractObjectKeyFromInput(value: string): string {
+        if (!/^https?:\/\//i.test(value)) {
+            return value.replace(/^\/+/, '');
+        }
+
+        let parsedUrl: URL;
+        try {
+            parsedUrl = new URL(value);
+        } catch {
+            throw new BadRequestException('Invalid object key URL');
+        }
+
+        const objectKey = parsedUrl.pathname.replace(/^\/+/, '');
+        return decodeURIComponent(objectKey);
     }
 }

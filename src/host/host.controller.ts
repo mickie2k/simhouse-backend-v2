@@ -103,6 +103,38 @@ export class HostController {
         return this.hostService.updateAvatar(req.user.id, data.objectKey);
     }
 
+    // ─── Simulator Endpoints ─────────────────────────────────────────
+
+    @ApiOperation({ summary: 'Get all simulators for current host' })
+    @ApiResponse({
+        status: 200,
+        description: 'Simulators retrieved successfully.',
+    })
+    @ApiResponse({ status: 401, description: 'Unauthorized.' })
+    @Get('simulator')
+    async getSimulators(
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ): Promise<unknown[]> {
+        return this.hostService.getSimulators(req.user.id);
+    }
+
+    @ApiOperation({ summary: 'Get a specific simulator by ID' })
+    @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
+    @ApiResponse({
+        status: 200,
+        description: 'Simulator retrieved successfully.',
+    })
+    @ApiResponse({ status: 401, description: 'Unauthorized.' })
+    @ApiResponse({ status: 403, description: 'Simulator not owned by host.' })
+    @ApiResponse({ status: 404, description: 'Simulator not found.' })
+    @Get('simulator/:simid')
+    async getSimulator(
+        @Param('simid') simid: string,
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ): Promise<unknown> {
+        return this.hostService.getSimulator(+simid, req.user.id);
+    }
+
     @ApiOperation({ summary: 'Get all bookings for current host' })
     @ApiResponse({
         status: 200,

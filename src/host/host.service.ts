@@ -83,13 +83,26 @@ export class HostService {
                     select: {
                         id: true,
                         simListName: true,
+                        firstImage: true,
+                        secondImage: true,
+                        thirdImage: true,
                     },
                 },
             },
             orderBy: { bookingDate: 'desc' },
         });
 
-        return bookings as unknown[];
+        return bookings.map((booking) => ({
+            ...booking,
+            simulator: {
+                ...booking.simulator,
+                firstImage: this.resolveImageUrl(booking.simulator.firstImage),
+                secondImage: this.resolveImageUrl(
+                    booking.simulator.secondImage,
+                ),
+                thirdImage: this.resolveImageUrl(booking.simulator.thirdImage),
+            },
+        }));
     }
 
     async getBookingFromSimID(simId: number, hostId: number) {
@@ -110,10 +123,30 @@ export class HostService {
                         email: true,
                     },
                 },
+                simulator: {
+                    select: {
+                        id: true,
+                        simListName: true,
+                        firstImage: true,
+                        secondImage: true,
+                        thirdImage: true,
+                    },
+                },
             },
             orderBy: { bookingDate: 'desc' },
         });
-        return bookings;
+
+        return bookings.map((booking) => ({
+            ...booking,
+            simulator: {
+                ...booking.simulator,
+                firstImage: this.resolveImageUrl(booking.simulator.firstImage),
+                secondImage: this.resolveImageUrl(
+                    booking.simulator.secondImage,
+                ),
+                thirdImage: this.resolveImageUrl(booking.simulator.thirdImage),
+            },
+        }));
     }
 
     async scheduleFromBookingID(
@@ -137,7 +170,19 @@ export class HostService {
                     },
                     orderBy: { schedule: { startTime: 'asc' } },
                 },
-                simulator: true,
+                simulator: {
+                    select: {
+                        id: true,
+                        simListName: true,
+                        firstImage: true,
+                        secondImage: true,
+                        thirdImage: true,
+                        addressDetail: true,
+                        latitude: true,
+                        longitude: true,
+                        pricePerHour: true,
+                    },
+                },
                 customer: {
                     select: {
                         id: true,
@@ -148,7 +193,22 @@ export class HostService {
                 bookingStatus: true,
             },
         });
-        return booking;
+
+        if (!booking) {
+            return null;
+        }
+
+        return {
+            ...booking,
+            simulator: {
+                ...booking.simulator,
+                firstImage: this.resolveImageUrl(booking.simulator.firstImage),
+                secondImage: this.resolveImageUrl(
+                    booking.simulator.secondImage,
+                ),
+                thirdImage: this.resolveImageUrl(booking.simulator.thirdImage),
+            },
+        };
     }
 
     async scheduleFromSimID(simId: number, hostId: number) {
@@ -224,16 +284,60 @@ export class HostService {
         }
 
         if (data.firstImageKey) {
-            await this.storageService.assertObjectExists(data.firstImageKey);
+            const normalizedFirstImageKey =
+                this.normalizeAndValidateSimulatorImageKey(
+                    data.firstImageKey,
+                    simId,
+                );
+            await this.storageService.assertObjectExists(
+                normalizedFirstImageKey,
+            );
+            data.firstImageKey = normalizedFirstImageKey;
         }
         if (data.secondImageKey) {
-            await this.storageService.assertObjectExists(data.secondImageKey);
+            const normalizedSecondImageKey =
+                this.normalizeAndValidateSimulatorImageKey(
+                    data.secondImageKey,
+                    simId,
+                );
+            await this.storageService.assertObjectExists(
+                normalizedSecondImageKey,
+            );
+            data.secondImageKey = normalizedSecondImageKey;
         }
         if (data.thirdImageKey) {
-            await this.storageService.assertObjectExists(data.thirdImageKey);
+            const normalizedThirdImageKey =
+                this.normalizeAndValidateSimulatorImageKey(
+                    data.thirdImageKey,
+                    simId,
+                );
+            await this.storageService.assertObjectExists(
+                normalizedThirdImageKey,
+            );
+            data.thirdImageKey = normalizedThirdImageKey;
         }
 
         return this.simulatorService.update(simId, data, hostId);
+    }
+
+    private normalizeAndValidateSimulatorImageKey(
+        objectKey: string,
+        simId: number,
+    ): string {
+        const normalizedObjectKey =
+            this.storageService.normalizeObjectKey(objectKey);
+        const simulatorPrefix =
+            this.configService.get<string>('S3_SIMULATOR_PREFIX') ??
+            'simulators';
+        const expectedPathPrefix = `${simulatorPrefix.replace(/^\/+|\/+$/g, '')}/sim/${simId}/`;
+
+        if (!normalizedObjectKey.startsWith(expectedPathPrefix)) {
+            throw new BadRequestException(
+                `Invalid image key. Expected key to start with "${expectedPathPrefix}"`,
+            );
+        }
+
+        return normalizedObjectKey;
     }
 
     /**
@@ -270,6 +374,73 @@ export class HostService {
             path: `sim/${simId}`,
             prefix,
         });
+    }
+
+    /**
+     * Gets all simulators owned by a host.
+     */
+    async getSimulators(hostId: number): Promise<unknown[]> {
+        const simulators = await this.prisma.simulator.findMany({
+            where: { hostId },
+            include: {
+                mod: {
+                    include: {
+                        brand: true,
+                    },
+                },
+                city: true,
+                typeList: {
+                    include: {
+                        simType: true,
+                    },
+                },
+            },
+            orderBy: { simListName: 'asc' },
+        });
+
+        return simulators.map((sim) => ({
+            ...sim,
+            firstImage: this.resolveImageUrl(sim.firstImage),
+            secondImage: this.resolveImageUrl(sim.secondImage),
+            thirdImage: this.resolveImageUrl(sim.thirdImage),
+        }));
+    }
+
+    /**
+     * Gets a specific simulator owned by a host.
+     */
+    async getSimulator(simId: number, hostId: number): Promise<unknown> {
+        const simulator = await this.prisma.simulator.findUnique({
+            where: { id: simId },
+            include: {
+                mod: {
+                    include: {
+                        brand: true,
+                    },
+                },
+                city: true,
+                typeList: {
+                    include: {
+                        simType: true,
+                    },
+                },
+            },
+        });
+
+        if (!simulator) {
+            throw new NotFoundException('Simulator not found');
+        }
+
+        if (simulator.hostId !== hostId) {
+            throw new ForbiddenException('You do not own this simulator');
+        }
+
+        return {
+            ...simulator,
+            firstImage: this.resolveImageUrl(simulator.firstImage),
+            secondImage: this.resolveImageUrl(simulator.secondImage),
+            thirdImage: this.resolveImageUrl(simulator.thirdImage),
+        };
     }
 
     /**
@@ -803,6 +974,11 @@ export class HostService {
 
     private dateTimeToMinutes(d: Date): number {
         return d.getUTCHours() * 60 + d.getUTCMinutes();
+    }
+
+    private resolveImageUrl(objectKey?: string): string | undefined {
+        if (!objectKey) return undefined;
+        return this.storageService.getCdnUrl(objectKey);
     }
 
     private getSecret(): Buffer {
