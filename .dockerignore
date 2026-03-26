@@ -1,0 +1,15 @@
+# .dockerignore
+.env
+.env.local
+.env.*.local
+node_modules
+dist
+.git
+.gitignore
+.DS_Store
+npm-debug.log
+.vscode
+.idea
+.next
+coverage
+.jest
