@@ -15,6 +15,7 @@ import { ScheduleJobModule } from './schedule-job/schedule-job.module';
 import { ReviewModule } from './review/review.module';
 import { AdminModule } from './admin/admin.module';
 import { LocationModule } from './location/location.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
     imports: [
@@ -32,6 +33,7 @@ import { LocationModule } from './location/location.module';
         ReviewModule,
         AdminModule,
         LocationModule,
+        HealthModule,
     ],
     controllers: [AppController],
     providers: [AppService],
