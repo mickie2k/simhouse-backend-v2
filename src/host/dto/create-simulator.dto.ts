@@ -82,4 +82,28 @@ export class CreateSimulatorDto {
     @IsNotEmpty()
     @IsNumber()
     cityId: number;
+
+    @ApiProperty({
+        description: 'Platform ID',
+        example: 1,
+    })
+    @IsNotEmpty()
+    @IsNumber()
+    platformid: number;
+
+    @ApiProperty({
+        description: 'Pedal model ID',
+        example: 1,
+    })
+    @IsNotEmpty()
+    @IsNumber()
+    pedalid: number;
+
+    @ApiProperty({
+        description: 'Screen setup ID',
+        example: 1,
+    })
+    @IsNotEmpty()
+    @IsNumber()
+    screensetup: number;
 }

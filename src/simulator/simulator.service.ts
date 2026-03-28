@@ -49,6 +49,9 @@ export class SimulatorService {
                         latitude: createSimulatorDto.latitude,
                         longitude: createSimulatorDto.longitude,
                         cityId: createSimulatorDto.cityId,
+                        platformId: createSimulatorDto.platformid,
+                        pedalId: createSimulatorDto.pedalid,
+                        screenSetupId: createSimulatorDto.screensetup,
                     },
                     select: {
                         id: true,
@@ -260,7 +263,7 @@ export class SimulatorService {
         const sortOrder = query.sortOrder ?? SortOrder.ASC;
 
         if (!query.city && !query.province && !query.country) {
-            query.city = 'Bangkok'; // Default to Bangkok if no location filter is provided
+            query.province = 'Bangkok'; // Default to Bangkok if no location filter is provided
         }
 
         const where = this.buildWhereClause(query);
@@ -344,6 +347,9 @@ export class SimulatorService {
                 mod: {
                     include: { brand: true },
                 },
+                pedal: {
+                    include: { brand: true },
+                },
                 host: {
                     select: {
                         id: true,
@@ -365,6 +371,9 @@ export class SimulatorService {
 
         return {
             ...simulator,
+            firstImage: this.resolveImageUrl(simulator.firstImage),
+            secondImage: this.resolveImageUrl(simulator.secondImage),
+            thirdImage: this.resolveImageUrl(simulator.thirdImage),
             city: simulator.city.name,
             province: simulator.city.province?.name,
             country: simulator.city.country.name,
@@ -774,6 +783,66 @@ export class SimulatorService {
             );
             throw new InternalServerErrorException(
                 'Failed to fetch simulator models',
+            );
+        }
+    }
+
+    /**
+     * Get all pedals, optionally filtered by brand
+     */
+    async getAllPedals(brandId?: number) {
+        try {
+            const where: Prisma.PedalWhereInput = {};
+            if (brandId) {
+                where.brandId = brandId;
+            }
+
+            const pedals = await this.prisma.pedal.findMany({
+                where,
+                select: {
+                    id: true,
+                    modelName: true,
+                    brandId: true,
+                    brand: {
+                        select: {
+                            id: true,
+                            brandName: true,
+                        },
+                    },
+                },
+                orderBy: {
+                    modelName: 'asc',
+                },
+            });
+            return pedals;
+        } catch (error) {
+            this.logger.error(
+                'Failed to fetch pedals',
+                error instanceof Error ? error.stack : undefined,
+            );
+            throw new InternalServerErrorException('Failed to fetch pedals');
+        }
+    }
+
+    async getAllSimulatorTypes() {
+        try {
+            const types = await this.prisma.simulatorType.findMany({
+                select: {
+                    id: true,
+                    typeName: true,
+                },
+                orderBy: {
+                    typeName: 'asc',
+                },
+            });
+            return types;
+        } catch (error) {
+            this.logger.error(
+                'Failed to fetch simulator types',
+                error instanceof Error ? error.stack : undefined,
+            );
+            throw new InternalServerErrorException(
+                'Failed to fetch simulator types',
             );
         }
     }

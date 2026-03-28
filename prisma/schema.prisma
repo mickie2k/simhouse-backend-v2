@@ -94,6 +94,7 @@ model SimulatorBrand {
   id        Int            @id @default(autoincrement()) @map("BrandID")
   brandName String         @map("BrandName") @db.VarChar(32)
   models    SimulatorMod[]
+  pedals    Pedal[]        @relation("PedalBrand")
 
   @@map("simulatorbrand")
 }
@@ -109,6 +110,35 @@ model SimulatorMod {
   @@map("simulatormodel")
 }
 
+model Pedal {
+  id          Int            @id @default(autoincrement()) @map("PedalID")
+  modelName   String         @map("ModelName") @db.VarChar(100)
+  description String?        @map("Description")
+  brandId     Int            @map("BrandID")
+  simulators  Simulator[]
+  brand       SimulatorBrand @relation("PedalBrand", fields: [brandId], references: [id])
+
+  @@map("pedalmodel")
+}
+
+model Platform {
+  id          Int         @id @default(autoincrement()) @map("PlatformID")
+  name        String      @map("Name") @db.VarChar(50)
+  description String?     @map("Description") @db.VarChar(200)
+  simulators  Simulator[]
+
+  @@map("platform")
+}
+
+model ScreenSetup {
+  id          Int         @id @default(autoincrement()) @map("ScreenSetupID")
+  name        String      @map("Name") @db.VarChar(50)
+  description String?     @map("Description") @db.VarChar(200)
+  simulators  Simulator[]
+
+  @@map("screensetup")
+}
+
 model Simulator {
   id              Int                 @id @default(autoincrement()) @map("SimID")
   simListName     String              @map("SimListName") @db.VarChar(255)
@@ -121,12 +151,18 @@ model Simulator {
   firstImage      String              @default("noimage.webp") @map("firstimage") @db.VarChar(255)
   secondImage     String              @default("noimage.webp") @map("secondimage") @db.VarChar(255)
   thirdImage      String              @default("noimage.webp") @map("thirdimage") @db.VarChar(255)
+  platformId      Int?                @map("PlatformID")
+  pedalId         Int?                @map("PedalID")
+  screenSetupId   Int?                @map("ScreenSetupID")
   hostId          Int                 @map("HostID")
   modId           Int                 @map("ModID")
   bookings        Booking[]
   city            City                @relation(fields: [cityId], references: [id])
   host            Host                @relation(fields: [hostId], references: [id])
   mod             SimulatorMod        @relation(fields: [modId], references: [id])
+  platform        Platform?           @relation(fields: [platformId], references: [id])
+  pedal           Pedal?              @relation(fields: [pedalId], references: [id])
+  screenSetup     ScreenSetup?        @relation(fields: [screenSetupId], references: [id])
   schedules       SimulatorSchedule[]
   scheduleTemplates ScheduleTemplate[]
   typeList        SimulatorTypeList[]

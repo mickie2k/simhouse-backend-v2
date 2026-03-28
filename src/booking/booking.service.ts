@@ -6,13 +6,17 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { StorageService } from 'src/storage/storage.service';
 import { BookingRequestDto } from './dto/booking-request.dto';
 import { ReviewService } from '../review/review.service';
 import { formatTime } from 'src/common/utils/formatTime';
 
 @Injectable()
 export class BookingService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly storageService: StorageService,
+    ) {}
     private readonly logger = new Logger(BookingService.name);
     private readonly reviewService: ReviewService;
 
@@ -69,6 +73,14 @@ export class BookingService {
 
         const format = {
             ...booking,
+            simulator: {
+                ...booking.simulator,
+                firstImage: this.resolveImageUrl(booking.simulator.firstImage),
+                secondImage: this.resolveImageUrl(
+                    booking.simulator.secondImage,
+                ),
+                thirdImage: this.resolveImageUrl(booking.simulator.thirdImage),
+            },
             bookingList: booking.bookingList.map((s) => ({
                 ...s,
                 schedule: {
@@ -227,5 +239,10 @@ export class BookingService {
         return await this.reviewService.getSimulatorReviewByBookingId(
             bookingId,
         );
+    }
+
+    private resolveImageUrl(objectKey?: string): string | undefined {
+        if (!objectKey) return undefined;
+        return this.storageService.getCdnUrl(objectKey);
     }
 }

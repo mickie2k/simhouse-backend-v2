@@ -169,7 +169,7 @@ export class HostAuthService {
         });
 
         if (redirect) {
-            res.redirect(process.env.FRONTEND_URL + '/host/dashboard');
+            res.redirect(process.env.FRONTEND_URL + '/hosting');
         } else {
             return {
                 message: 'Login successful',

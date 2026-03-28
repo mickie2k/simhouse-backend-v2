@@ -74,9 +74,7 @@ import { AuthenticatedHost } from '../types/authenticated-host.type';
                     {
                         name: 'host-google',
                         callbackURL:
-                            configService.get('GOOGLE_HOST_CALLBACK_URL') ??
-                            configService.get('BACKEND_URL') +
-                                '/auth/host/google/callback',
+                            configService.get('GOOGLE_HOST_CALLBACK_URL') ?? '',
                     },
                     authService,
                 );

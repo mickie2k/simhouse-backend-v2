@@ -14,6 +14,7 @@ import { StorageModule } from './storage/storage.module';
 import { ScheduleJobModule } from './schedule-job/schedule-job.module';
 import { ReviewModule } from './review/review.module';
 import { AdminModule } from './admin/admin.module';
+import { LocationModule } from './location/location.module';
 
 @Module({
     imports: [
@@ -30,6 +31,7 @@ import { AdminModule } from './admin/admin.module';
         ScheduleJobModule,
         ReviewModule,
         AdminModule,
+        LocationModule,
     ],
     controllers: [AppController],
     providers: [AppService],

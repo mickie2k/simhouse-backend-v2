@@ -342,6 +342,7 @@ export class HostService {
 
     /**
      * Creates a pre-signed upload URL for a simulator image.
+     * Supports specific image types (firstImage, secondImage, thirdImage) or generic uploads.
      */
     async createSimulatorImageUpload(
         hostId: number,
@@ -395,7 +396,7 @@ export class HostService {
                     },
                 },
             },
-            orderBy: { simListName: 'asc' },
+            orderBy: { id: 'desc' },
         });
 
         return simulators.map((sim) => ({
@@ -900,6 +901,86 @@ export class HostService {
             where: { id: scheduleId },
         });
         return { message: 'Slot deleted' };
+    }
+
+    // ─── Overview & Dashboard ─────────────────────────────────────────
+
+    async getOverview(hostId: number) {
+        // Get today's date range
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        // Get start of current month
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
+        // Get all bookings for this host
+        const allBookings = await this.prisma.booking.findMany({
+            where: {
+                simulator: {
+                    hostId,
+                },
+            },
+            include: {
+                bookingStatus: true,
+                review: {
+                    include: {
+                        reviewList: true,
+                    },
+                },
+            },
+        });
+
+        // Count pending requests
+        const pendingBookings = allBookings.filter(
+            (b) => b.bookingStatus.statusName.toUpperCase() === 'PENDING',
+        );
+        const pendingRequests = pendingBookings.length;
+
+        // Assume the first few pending bookings (or 4) are "new"
+        const newRequests = Math.min(4, pendingRequests);
+
+        // Count today's bookings
+        const todayBookings = allBookings.filter((b) => {
+            const bookingDate = new Date(b.bookingDate);
+            bookingDate.setHours(0, 0, 0, 0);
+            return bookingDate.getTime() === today.getTime();
+        }).length;
+
+        // Calculate monthly revenue (sum of all bookings in current month)
+        let monthlyRevenue = 0;
+        allBookings.forEach((b) => {
+            const bookingDate = new Date(b.bookingDate);
+            if (
+                bookingDate >= monthStart &&
+                bookingDate.getFullYear() === today.getFullYear() &&
+                bookingDate.getMonth() === today.getMonth()
+            ) {
+                monthlyRevenue += parseFloat(b.totalPrice.toString());
+            }
+        });
+
+        // Calculate average rating
+        const reviewsWithRating = allBookings
+            .filter((b) => b.review !== null && b.review.overallRating)
+            .map((b) => b.review!.overallRating);
+
+        const averageRating =
+            reviewsWithRating.length > 0
+                ? reviewsWithRating.reduce((a, b) => a + b, 0) /
+                  reviewsWithRating.length
+                : 0;
+
+        return {
+            pendingRequests,
+            newRequests,
+            todayBookings,
+            monthlyRevenue: parseFloat(monthlyRevenue.toFixed(2)),
+            rating:
+                averageRating > 0 ? parseFloat(averageRating.toFixed(1)) : 0,
+            totalReviews: reviewsWithRating.length,
+        };
     }
 
     // ─── Private Helpers ──────────────────────────────────────────────

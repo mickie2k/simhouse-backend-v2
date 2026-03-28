@@ -135,6 +135,19 @@ export class HostController {
         return this.hostService.getSimulator(+simid, req.user.id);
     }
 
+    @ApiOperation({ summary: 'Get overview dashboard data for current host' })
+    @ApiResponse({
+        status: 200,
+        description: 'Overview data retrieved successfully.',
+    })
+    @ApiResponse({ status: 401, description: 'Unauthorized.' })
+    @Get('overview')
+    async getOverview(
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ): Promise<unknown> {
+        return this.hostService.getOverview(req.user.id);
+    }
+
     @ApiOperation({ summary: 'Get all bookings for current host' })
     @ApiResponse({
         status: 200,

@@ -229,6 +229,34 @@ export class SimulatorController {
         );
     }
 
+    @ApiOperation({ summary: 'Get all pedals' })
+    @ApiQuery({
+        name: 'brandId',
+        type: Number,
+        required: false,
+        description: 'Filter pedals by brand ID',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Pedals retrieved successfully.',
+    })
+    @Get('pedals/list')
+    async getPedals(@Query('brandId') brandId?: string) {
+        return await this.simulatorService.getAllPedals(
+            brandId ? +brandId : undefined,
+        );
+    }
+
+    @ApiOperation({ summary: 'Get all simulator types' })
+    @ApiResponse({
+        status: 200,
+        description: 'Simulator types retrieved successfully.',
+    })
+    @Get('types/list')
+    async getSimulatorTypes() {
+        return await this.simulatorService.getAllSimulatorTypes();
+    }
+
     @ApiOperation({ summary: 'Get a simulator by ID' })
     @ApiParam({ name: 'id', description: 'Simulator ID', type: 'number' })
     @ApiResponse({ status: 200, description: 'Simulator found.' })

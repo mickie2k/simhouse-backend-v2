@@ -17,6 +17,7 @@ const mockFindMany = jest.fn();
 const mockCount = jest.fn();
 const mockTransaction = jest.fn();
 const mockGetPublicUrl = jest.fn((value?: string) => value);
+const mockGetCdnUrl = jest.fn((value?: string) => value);
 
 const mockPrismaFactory = () => ({
     simulator: {
@@ -28,6 +29,7 @@ const mockPrismaFactory = () => ({
 
 const mockStorageFactory = () => ({
     getPublicUrl: mockGetPublicUrl,
+    getCdnUrl: mockGetCdnUrl,
 });
 
 describe('SimulatorService', () => {
