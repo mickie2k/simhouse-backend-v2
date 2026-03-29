@@ -377,6 +377,9 @@ export class SimulatorService {
             city: simulator.city.name,
             province: simulator.city.province?.name,
             country: simulator.city.country.name,
+            cityId: simulator.cityId,
+            stateId: simulator.city.provinceId,
+            countryId: simulator.city.countryId,
         };
     }
 
@@ -585,6 +588,7 @@ export class SimulatorService {
             firstImage?: string;
             secondImage?: string;
             thirdImage?: string;
+            cityId?: number;
         } = {};
 
         if (updateSimulatorDto.simlistname !== undefined) {

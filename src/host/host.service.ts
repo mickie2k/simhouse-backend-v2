@@ -795,19 +795,23 @@ export class HostService {
             where.date = dateFilter;
         }
 
-        return this.prisma.simulatorSchedule.findMany({
+        const slots = await this.prisma.simulatorSchedule.findMany({
             where,
             orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
-            include: {
-                bookingList: {
-                    include: {
-                        booking: {
-                            select: { id: true, statusId: true },
-                        },
-                    },
-                },
-            },
         });
+
+        // Transform to clean response format
+        return slots.map((slot) => ({
+            id: slot.id,
+            date: slot.date.toISOString(),
+            startTime: this.dateToTimeStr(slot.startTime),
+            endTime: this.dateToTimeStr(slot.endTime),
+            pricePerHour:
+                typeof slot.price === 'number'
+                    ? slot.price
+                    : parseFloat(slot.price.toString()),
+            isAvailable: slot.available,
+        }));
     }
 
     async updateScheduleSlot(
@@ -845,6 +849,13 @@ export class HostService {
         const updateData: Record<string, unknown> = {};
         if (dto.price !== undefined) updateData.price = dto.price;
         if (dto.available !== undefined) updateData.available = dto.available;
+
+        Logger.debug(
+            `Updating schedule slot ${scheduleId} with data: ${JSON.stringify(
+                updateData,
+            )}`,
+            'HostService',
+        );
 
         return this.prisma.simulatorSchedule.update({
             where: { id: scheduleId },

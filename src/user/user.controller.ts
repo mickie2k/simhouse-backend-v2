@@ -6,16 +6,24 @@ import {
     Post,
     UseGuards,
     Request,
+    Param,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CustomerJwtAuthGuard } from 'src/auth/customer-auth/guards/customer-jwt-auth.guard';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+    ApiBody,
+    ApiOperation,
+    ApiResponse,
+    ApiTags,
+    ApiParam,
+} from '@nestjs/swagger';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
 import { CreateUserAvatarUploadDto } from './dto/create-user-avatar-upload.dto';
 import { UpdateUserAvatarDto } from './dto/update-user-avatar.dto';
 import type { Request as ExpressRequest } from 'express';
 import { AuthenticatedCustomer } from 'src/auth/types/authenticated-customer.type';
+import { ReviewService } from 'src/review/review.service';
 
 @ApiTags('user')
 @Controller('user')
@@ -23,7 +31,10 @@ import { AuthenticatedCustomer } from 'src/auth/types/authenticated-customer.typ
  * Handles customer user profile and account endpoints.
  */
 export class UserController {
-    constructor(private readonly userService: UserService) {}
+    constructor(
+        private readonly userService: UserService,
+        private readonly reviewService: ReviewService,
+    ) {}
 
     @ApiOperation({ summary: 'Get current user profile' })
     @ApiResponse({
@@ -137,5 +148,21 @@ export class UserController {
         @Request() req: ExpressRequest & { user: AuthenticatedCustomer },
     ): Promise<unknown> {
         return this.userService.getUsername(req.user);
+    }
+
+    @ApiOperation({ summary: 'Get reviews for a specific customer' })
+    @ApiParam({
+        name: 'userId',
+        description: 'Customer User ID',
+        type: 'number',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Customer reviews retrieved successfully.',
+    })
+    @ApiResponse({ status: 404, description: 'Customer not found.' })
+    @Get(':userId/reviews')
+    getCustomerReviews(@Param('userId') userId: string): Promise<unknown> {
+        return this.reviewService.getCustomerReviews(+userId);
     }
 }
