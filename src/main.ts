@@ -28,57 +28,69 @@ async function bootstrap() {
         }),
     );
 
-    // Swagger/OpenAPI configuration
-    const config = new DocumentBuilder()
-        .setTitle('SimHouse API')
-        .setDescription('SimHouse Simulator Booking Platform API Documentation')
-        .setVersion('2.0')
-        .addTag('auth', 'Authentication endpoints')
-        .addTag('user', 'User management endpoints')
-        .addTag('booking', 'Booking management endpoints')
-        .addTag('host', 'Host management endpoints')
-        .addTag('simulator', 'Simulator management endpoints')
-        .addCookieAuth('customer_access_token', {
-            type: 'apiKey',
-            in: 'cookie',
-            name: 'customer_access_token',
-            description: 'JWT access token stored in cookie',
-        })
-        .addCookieAuth('customer_refresh_token', {
-            type: 'apiKey',
-            in: 'cookie',
-            name: 'customer_refresh_token',
-            description: 'JWT refresh token stored in cookie',
-        })
-        .addCookieAuth('host_access_token', {
-            type: 'apiKey',
-            in: 'cookie',
-            name: 'host_access_token',
-            description: 'JWT access token stored in cookie',
-        })
-        .addCookieAuth('host_refresh_token', {
-            type: 'apiKey',
-            in: 'cookie',
-            name: 'host_refresh_token',
-            description: 'JWT refresh token stored in cookie',
-        })
-        .build();
+    // Swagger/OpenAPI configuration - only enable in non-production environments
+    const isProduction = process.env.NODE_ENV === 'production';
 
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api', app, document, {
-        swaggerOptions: {
-            persistAuthorization: true,
-            withCredentials: true,
-        },
-    });
+    if (!isProduction) {
+        const config = new DocumentBuilder()
+            .setTitle('SimHouse API')
+            .setDescription(
+                'SimHouse Simulator Booking Platform API Documentation',
+            )
+            .setVersion('2.0')
+            .addTag('auth', 'Authentication endpoints')
+            .addTag('user', 'User management endpoints')
+            .addTag('booking', 'Booking management endpoints')
+            .addTag('host', 'Host management endpoints')
+            .addTag('simulator', 'Simulator management endpoints')
+            .addCookieAuth('customer_access_token', {
+                type: 'apiKey',
+                in: 'cookie',
+                name: 'customer_access_token',
+                description: 'JWT access token stored in cookie',
+            })
+            .addCookieAuth('customer_refresh_token', {
+                type: 'apiKey',
+                in: 'cookie',
+                name: 'customer_refresh_token',
+                description: 'JWT refresh token stored in cookie',
+            })
+            .addCookieAuth('host_access_token', {
+                type: 'apiKey',
+                in: 'cookie',
+                name: 'host_access_token',
+                description: 'JWT access token stored in cookie',
+            })
+            .addCookieAuth('host_refresh_token', {
+                type: 'apiKey',
+                in: 'cookie',
+                name: 'host_refresh_token',
+                description: 'JWT refresh token stored in cookie',
+            })
+            .build();
+
+        const document = SwaggerModule.createDocument(app, config);
+        SwaggerModule.setup('api', app, document, {
+            swaggerOptions: {
+                persistAuthorization: true,
+                withCredentials: true,
+            },
+        });
+    }
 
     await app.listen(process.env.PORT ?? 3000);
-    console.log(
-        `Application is running on: http://localhost:${process.env.PORT ?? 3000}`,
-    );
-    console.log(
-        `Swagger documentation available at: http://localhost:${process.env.PORT ?? 3000}/api`,
-    );
+    const port = process.env.PORT ?? 3000;
+    console.log(`Application is running on: http://localhost:${port}`);
+
+    if (!isProduction) {
+        console.log(
+            `Swagger documentation available at: http://localhost:${port}/api`,
+        );
+    } else {
+        console.log(
+            '✓ Running in PRODUCTION mode - Swagger documentation is disabled',
+        );
+    }
 }
 
 void bootstrap();

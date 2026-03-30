@@ -1,4 +1,4 @@
-FROM node:25-alpine
+FROM node:24.14-bookworm-slim
 
 # Set the working directory inside the container
 WORKDIR /usr/src/app
