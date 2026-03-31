@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
     IsInt,
+    IsNumber,
     IsString,
     IsOptional,
     Min,
@@ -38,7 +39,7 @@ export class CreateSimulatorReviewDto {
         maximum: 5,
         example: 5,
     })
-    @IsInt()
+    @IsNumber()
     @Min(1)
     @Max(5)
     overallRating: number;

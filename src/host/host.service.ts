@@ -88,6 +88,20 @@ export class HostService {
                         thirdImage: true,
                     },
                 },
+                bookingList: {
+                    include: {
+                        schedule: {
+                            select: {
+                                id: true,
+                                date: true,
+                                startTime: true,
+                                endTime: true,
+                                price: true,
+                            },
+                        },
+                    },
+                    orderBy: { schedule: { date: 'asc' } },
+                },
             },
             orderBy: { bookingDate: 'desc' },
         });
@@ -191,11 +205,12 @@ export class HostService {
                     },
                 },
                 bookingStatus: true,
+                customerReviews: true,
             },
         });
 
         if (!booking) {
-            return null;
+            throw new NotFoundException('Booking not found');
         }
 
         return {

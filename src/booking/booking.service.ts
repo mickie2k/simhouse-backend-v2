@@ -64,6 +64,7 @@ export class BookingService {
                         },
                     },
                 },
+                review: true,
             },
         });
 

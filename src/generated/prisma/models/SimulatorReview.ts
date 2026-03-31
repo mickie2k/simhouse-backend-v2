@@ -214,7 +214,7 @@ export type SimulatorReviewWhereInput = {
   NOT?: Prisma.SimulatorReviewWhereInput | Prisma.SimulatorReviewWhereInput[]
   id?: Prisma.IntFilter<"SimulatorReview"> | number
   comment?: Prisma.StringNullableFilter<"SimulatorReview"> | string | null
-  overallRating?: Prisma.IntFilter<"SimulatorReview"> | number
+  overallRating?: Prisma.FloatFilter<"SimulatorReview"> | number
   bookingId?: Prisma.IntFilter<"SimulatorReview"> | number
   booking?: Prisma.XOR<Prisma.BookingScalarRelationFilter, Prisma.BookingWhereInput>
   reviewList?: Prisma.SimulatorReviewListListRelationFilter
@@ -236,7 +236,7 @@ export type SimulatorReviewWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.SimulatorReviewWhereInput[]
   NOT?: Prisma.SimulatorReviewWhereInput | Prisma.SimulatorReviewWhereInput[]
   comment?: Prisma.StringNullableFilter<"SimulatorReview"> | string | null
-  overallRating?: Prisma.IntFilter<"SimulatorReview"> | number
+  overallRating?: Prisma.FloatFilter<"SimulatorReview"> | number
   booking?: Prisma.XOR<Prisma.BookingScalarRelationFilter, Prisma.BookingWhereInput>
   reviewList?: Prisma.SimulatorReviewListListRelationFilter
 }, "id" | "bookingId">
@@ -259,7 +259,7 @@ export type SimulatorReviewScalarWhereWithAggregatesInput = {
   NOT?: Prisma.SimulatorReviewScalarWhereWithAggregatesInput | Prisma.SimulatorReviewScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"SimulatorReview"> | number
   comment?: Prisma.StringNullableWithAggregatesFilter<"SimulatorReview"> | string | null
-  overallRating?: Prisma.IntWithAggregatesFilter<"SimulatorReview"> | number
+  overallRating?: Prisma.FloatWithAggregatesFilter<"SimulatorReview"> | number
   bookingId?: Prisma.IntWithAggregatesFilter<"SimulatorReview"> | number
 }
 
@@ -280,7 +280,7 @@ export type SimulatorReviewUncheckedCreateInput = {
 
 export type SimulatorReviewUpdateInput = {
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  overallRating?: Prisma.IntFieldUpdateOperationsInput | number
+  overallRating?: Prisma.FloatFieldUpdateOperationsInput | number
   booking?: Prisma.BookingUpdateOneRequiredWithoutReviewNestedInput
   reviewList?: Prisma.SimulatorReviewListUpdateManyWithoutReviewNestedInput
 }
@@ -288,7 +288,7 @@ export type SimulatorReviewUpdateInput = {
 export type SimulatorReviewUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  overallRating?: Prisma.IntFieldUpdateOperationsInput | number
+  overallRating?: Prisma.FloatFieldUpdateOperationsInput | number
   bookingId?: Prisma.IntFieldUpdateOperationsInput | number
   reviewList?: Prisma.SimulatorReviewListUncheckedUpdateManyWithoutReviewNestedInput
 }
@@ -302,13 +302,13 @@ export type SimulatorReviewCreateManyInput = {
 
 export type SimulatorReviewUpdateManyMutationInput = {
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  overallRating?: Prisma.IntFieldUpdateOperationsInput | number
+  overallRating?: Prisma.FloatFieldUpdateOperationsInput | number
 }
 
 export type SimulatorReviewUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  overallRating?: Prisma.IntFieldUpdateOperationsInput | number
+  overallRating?: Prisma.FloatFieldUpdateOperationsInput | number
   bookingId?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -387,6 +387,14 @@ export type SimulatorReviewUncheckedUpdateOneWithoutBookingNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.SimulatorReviewUpdateToOneWithWhereWithoutBookingInput, Prisma.SimulatorReviewUpdateWithoutBookingInput>, Prisma.SimulatorReviewUncheckedUpdateWithoutBookingInput>
 }
 
+export type FloatFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type SimulatorReviewCreateNestedOneWithoutReviewListInput = {
   create?: Prisma.XOR<Prisma.SimulatorReviewCreateWithoutReviewListInput, Prisma.SimulatorReviewUncheckedCreateWithoutReviewListInput>
   connectOrCreate?: Prisma.SimulatorReviewCreateOrConnectWithoutReviewListInput
@@ -432,14 +440,14 @@ export type SimulatorReviewUpdateToOneWithWhereWithoutBookingInput = {
 
 export type SimulatorReviewUpdateWithoutBookingInput = {
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  overallRating?: Prisma.IntFieldUpdateOperationsInput | number
+  overallRating?: Prisma.FloatFieldUpdateOperationsInput | number
   reviewList?: Prisma.SimulatorReviewListUpdateManyWithoutReviewNestedInput
 }
 
 export type SimulatorReviewUncheckedUpdateWithoutBookingInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  overallRating?: Prisma.IntFieldUpdateOperationsInput | number
+  overallRating?: Prisma.FloatFieldUpdateOperationsInput | number
   reviewList?: Prisma.SimulatorReviewListUncheckedUpdateManyWithoutReviewNestedInput
 }
 
@@ -474,14 +482,14 @@ export type SimulatorReviewUpdateToOneWithWhereWithoutReviewListInput = {
 
 export type SimulatorReviewUpdateWithoutReviewListInput = {
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  overallRating?: Prisma.IntFieldUpdateOperationsInput | number
+  overallRating?: Prisma.FloatFieldUpdateOperationsInput | number
   booking?: Prisma.BookingUpdateOneRequiredWithoutReviewNestedInput
 }
 
 export type SimulatorReviewUncheckedUpdateWithoutReviewListInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   comment?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  overallRating?: Prisma.IntFieldUpdateOperationsInput | number
+  overallRating?: Prisma.FloatFieldUpdateOperationsInput | number
   bookingId?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -1000,7 +1008,7 @@ export interface Prisma__SimulatorReviewClient<T, Null = never, ExtArgs extends 
 export interface SimulatorReviewFieldRefs {
   readonly id: Prisma.FieldRef<"SimulatorReview", 'Int'>
   readonly comment: Prisma.FieldRef<"SimulatorReview", 'String'>
-  readonly overallRating: Prisma.FieldRef<"SimulatorReview", 'Int'>
+  readonly overallRating: Prisma.FieldRef<"SimulatorReview", 'Float'>
   readonly bookingId: Prisma.FieldRef<"SimulatorReview", 'Int'>
 }
     

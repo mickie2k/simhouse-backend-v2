@@ -243,7 +243,7 @@ model BookingList {
 model SimulatorReview {
   id         Int       @id @default(autoincrement()) @map("ReviewID")
   comment    String?   @map("Comment") @db.VarChar(1000)
-  overallRating Int       @map("OverallRating") @db.SmallInt
+  overallRating Float     @map("OverallRating") @db.DoublePrecision
   bookingId  Int       @map("BookingID") @unique
   booking    Booking   @relation(fields: [bookingId], references: [id])
   reviewList SimulatorReviewList[]
