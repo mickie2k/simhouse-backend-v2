@@ -209,6 +209,24 @@ export class HostController {
         return this.hostService.confirmBooking(+bookingid, +simid, req.user.id);
     }
 
+    @ApiOperation({ summary: 'Cancel a booking (host)' })
+    @ApiParam({ name: 'simid', description: 'Simulator ID', type: 'number' })
+    @ApiParam({ name: 'bookingid', description: 'Booking ID', type: 'number' })
+    @ApiResponse({
+        status: 200,
+        description: 'Booking cancelled successfully.',
+    })
+    @ApiResponse({ status: 401, description: 'Unauthorized.' })
+    @ApiResponse({ status: 404, description: 'Booking not found.' })
+    @Post('booking/:simid/:bookingid/cancel')
+    async cancelBooking(
+        @Param('simid') simid: string,
+        @Param('bookingid') bookingid: string,
+        @Request() req: ExpressRequest & { user: AuthenticatedHost },
+    ): Promise<unknown> {
+        return this.hostService.cancelBooking(+bookingid, +simid, req.user.id);
+    }
+
     @ApiOperation({ summary: 'Upload a new simulator with images' })
     @ApiBody({ type: CreateSimulatorDto })
     @Post('simulator')

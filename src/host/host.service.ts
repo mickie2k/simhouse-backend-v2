@@ -264,6 +264,42 @@ export class HostService {
         return { status, message };
     }
 
+    async cancelBooking(bookingId: number, simId: number, hostId: number) {
+        // Allow host to cancel pending or confirmed bookings
+        const result = await this.prisma.booking.updateMany({
+            where: {
+                id: bookingId,
+                simId,
+                simulator: { hostId },
+                statusId: { in: [1, 2] },
+            },
+            data: { statusId: 3 },
+        });
+
+        // If we successfully changed status, release linked schedule slots
+        if (result.count > 0) {
+            const bookingListItems = await this.prisma.bookingList.findMany({
+                where: { bookingId },
+                select: { scheduleId: true },
+            });
+
+            const scheduleIds = bookingListItems.map((item) => item.scheduleId);
+            if (scheduleIds.length > 0) {
+                await this.prisma.simulatorSchedule.updateMany({
+                    where: { id: { in: scheduleIds } },
+                    data: { available: true },
+                });
+            }
+        }
+
+        const message =
+            result.count > 0
+                ? 'Booking has been canceled.'
+                : 'Booking cannot be canceled.';
+        const status = result.count > 0;
+        return { status, message };
+    }
+
     async uploadSimulator(
         createSimulatorDto: CreateSimulatorDto,
         hostId: number,
