@@ -195,11 +195,17 @@ export class HostAuthService {
             secret: this.secret,
         });
 
+        const createHostData = {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            username: data.username,
+            email: data.email,
+            phone: data.phone,
+            password: hashedPassword,
+        };
+
         const host = await this.prisma.host.create({
-            data: {
-                ...data,
-                password: hashedPassword,
-            },
+            data: createHostData,
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars

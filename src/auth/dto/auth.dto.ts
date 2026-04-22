@@ -83,4 +83,11 @@ export class RegisterUserDto {
     @IsNotEmpty()
     @IsString()
     lastName: string;
+
+    @ApiProperty({
+        description: 'User phone number',
+        example: '+1234567890',
+    })
+    @IsString()
+    phone?: string;
 }

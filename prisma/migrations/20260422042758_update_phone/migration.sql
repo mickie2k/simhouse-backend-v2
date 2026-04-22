@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "customer" ALTER COLUMN "CTel" SET DATA TYPE VARCHAR(12);
+
+-- AlterTable
+ALTER TABLE "host" ALTER COLUMN "Htel" SET DATA TYPE VARCHAR(12);
