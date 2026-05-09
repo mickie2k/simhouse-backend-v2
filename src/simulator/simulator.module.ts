@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { SimulatorService } from './simulator.service';
 import { SimulatorController } from './simulator.controller';
-import { PrismaModule } from 'src/prisma/prisma.module';
-import { ReviewModule } from 'src/review/review.module';
-import { StorageModule } from 'src/storage/storage.module';
+import { PrismaModule } from '../prisma/prisma.module';
+import { ReviewModule } from '../review/review.module';
+import { StorageModule } from '../storage/storage.module';
 
 @Module({
     imports: [PrismaModule, ReviewModule, StorageModule],

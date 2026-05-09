@@ -2,7 +2,7 @@ import {
     Host,
     SimulatorMod,
     SimulatorTypeList,
-} from 'src/generated/prisma/client';
+} from '../../generated/prisma/client';
 
 export class SimulatorResponseDTO {
     id: number;

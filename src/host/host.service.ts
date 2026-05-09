@@ -9,14 +9,14 @@ import {
     UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma } from 'src/generated/prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { SimulatorService } from 'src/simulator/simulator.service';
-import { StorageService } from 'src/storage/storage.service';
+import { Prisma } from '../generated/prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { SimulatorService } from '../simulator/simulator.service';
+import { StorageService } from '../storage/storage.service';
 import { CreateSimulatorDto } from './dto/create-simulator.dto';
 import { UpdateHostProfileDto } from './dto/update-host-profile.dto';
 import { ChangeHostPasswordDto } from './dto/change-host-password.dto';
-import { UpdateSimulatorDto } from 'src/host/dto/update-simulator.dto';
+import { UpdateSimulatorDto } from './dto/update-simulator.dto';
 import {
     CreateScheduleTemplateDto,
     BulkCreateScheduleTemplateDto,
@@ -24,7 +24,7 @@ import {
 import { UpdateScheduleTemplateDto } from './dto/update-schedule-template.dto';
 import { UpdateScheduleSlotDto } from './dto/update-schedule-slot.dto';
 import { CreateAdHocScheduleDto } from './dto/create-adhoc-schedule.dto';
-import { ScheduleJobService } from 'src/schedule-job/schedule-job.service';
+import { ScheduleJobService } from '../schedule-job/schedule-job.service';
 import * as argon2 from 'argon2';
 
 interface HostProfileResponse {

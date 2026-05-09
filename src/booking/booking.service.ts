@@ -5,11 +5,11 @@ import {
     Logger,
     NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { StorageService } from 'src/storage/storage.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { BookingRequestDto } from './dto/booking-request.dto';
 import { ReviewService } from '../review/review.service';
-import { formatTime } from 'src/common/utils/formatTime';
+import { formatTime } from '../common/utils/formatTime';
 
 @Injectable()
 export class BookingService {

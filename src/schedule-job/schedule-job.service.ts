@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import {
     materializeSchedule,
     getDatesForDayOfWeek,
     splitIntoHourlySlots,
-} from 'src/common/utils/materialization-schedule';
+} from '../common/utils/materialization-schedule';
 
 const ADVANCE_DAYS = 60;
 

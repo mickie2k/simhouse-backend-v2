@@ -6,9 +6,9 @@ import {
     Logger,
     NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from 'src/generated/prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { StorageService } from 'src/storage/storage.service';
+import { Prisma } from '../generated/prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { CreateSimulatorDto } from '../host/dto/create-simulator.dto';
 import { UpdateSimulatorDto } from '../host/dto/update-simulator.dto';
 import { FindNearestSimulatorsDto } from './dto/find-nearest-simulators.dto';
@@ -21,8 +21,8 @@ import {
     createPaginatedResponse,
     PaginatedResponseDto,
 } from '../common/dto/paginated-response.dto';
-import { ReviewService } from 'src/review/review.service';
-import { formatTime } from 'src/common/utils/formatTime';
+import { ReviewService } from '../review/review.service';
+import { formatTime } from '../common/utils/formatTime';
 
 @Injectable()
 export class SimulatorService {

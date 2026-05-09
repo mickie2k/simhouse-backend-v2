@@ -9,7 +9,7 @@ import {
     Param,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CustomerJwtAuthGuard } from 'src/auth/customer-auth/guards/customer-jwt-auth.guard';
+import { CustomerJwtAuthGuard } from '../auth/customer-auth/guards/customer-jwt-auth.guard';
 import {
     ApiBody,
     ApiOperation,
@@ -22,8 +22,8 @@ import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
 import { CreateUserAvatarUploadDto } from './dto/create-user-avatar-upload.dto';
 import { UpdateUserAvatarDto } from './dto/update-user-avatar.dto';
 import type { Request as ExpressRequest } from 'express';
-import { AuthenticatedCustomer } from 'src/auth/types/authenticated-customer.type';
-import { ReviewService } from 'src/review/review.service';
+import { AuthenticatedCustomer } from '../auth/types/authenticated-customer.type';
+import { ReviewService } from '../review/review.service';
 
 @ApiTags('user')
 @Controller('user')

@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { HostService } from './host.service';
 import { CreateSimulatorDto } from './dto/create-simulator.dto';
-import { HostJwtAuthGuard } from 'src/auth/host-auth/guards/host-jwt-auth.guard';
+import { HostJwtAuthGuard } from '../auth/host-auth/guards/host-jwt-auth.guard';
 import type { Request as ExpressRequest } from 'express';
 import {
     ApiTags,
@@ -28,9 +28,9 @@ import { UpdateHostProfileDto } from './dto/update-host-profile.dto';
 import { ChangeHostPasswordDto } from './dto/change-host-password.dto';
 import { CreateHostAvatarUploadDto } from './dto/create-host-avatar-upload.dto';
 import { UpdateHostAvatarDto } from './dto/update-host-avatar.dto';
-import { AuthenticatedHost } from 'src/auth/types/authenticated-host.type';
-import { CreateSimulatorImageUploadDto } from 'src/simulator/dto/create-simulator-image-upload.dto';
-import { UpdateSimulatorDto } from 'src/host/dto/update-simulator.dto';
+import { AuthenticatedHost } from '../auth/types/authenticated-host.type';
+import { CreateSimulatorImageUploadDto } from '../simulator/dto/create-simulator-image-upload.dto';
+import { UpdateSimulatorDto } from './dto/update-simulator.dto';
 import {
     CreateScheduleTemplateDto,
     BulkCreateScheduleTemplateDto,

@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client';
-import { materializeSchedule } from 'src/common/utils/materialization-schedule';
+import { materializeSchedule } from '../src/common/utils/materialization-schedule';
 import { Logger } from '@nestjs/common';
 
 const connectionString = `${process.env.DATABASE_URL}`;

@@ -7,14 +7,14 @@ import {
     UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma } from 'src/generated/prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { StorageService } from 'src/storage/storage.service';
+import { Prisma } from '../generated/prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { FindUserDto } from './dto/find-user.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
 import * as argon2 from 'argon2';
-import { AuthenticatedCustomer } from 'src/auth/types/authenticated-customer.type';
+import { AuthenticatedCustomer } from '../auth/types/authenticated-customer.type';
 import { UserProfileResponse } from './interfaces/user-profile-response.interface';
 import { UserUpdateFields } from './interfaces/user-update-fields.interface';
 
